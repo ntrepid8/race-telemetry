@@ -51,3 +51,9 @@ port: 5432
 user: postgres
 password: postgres
 ```
+
+## F1 22 UDP Specification
+
+For the UDP specification for F1 2022 see:
+
+- https://answers.ea.com/t5/General-Discussion/F1-22-UDP-Specification/td-p/11551274
