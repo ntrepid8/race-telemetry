@@ -14,9 +14,12 @@ defmodule RacingTelemetry.Application do
       # Start the PubSub system
       {Phoenix.PubSub, name: RacingTelemetry.PubSub},
       # Start the Endpoint (http/https)
-      RacingTelemetryWeb.Endpoint
+      RacingTelemetryWeb.Endpoint,
       # Start a worker by calling: RacingTelemetry.Worker.start_link(arg)
       # {RacingTelemetry.Worker, arg}
+
+      # F1 22
+      {RacingTelemetry.F122Supervisor, []}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
