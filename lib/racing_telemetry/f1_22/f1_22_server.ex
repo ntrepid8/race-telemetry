@@ -12,6 +12,7 @@ defmodule RacingTelemetry.F122Server do
 
     # runtime
     listen_socket: nil,
+    packet_type_samples: [],
 
     # GenServer stuff
     hibernate_timeout: 15_000,  # hibernate after 15 seconds of inactivity
@@ -52,6 +53,17 @@ defmodule RacingTelemetry.F122Server do
       "port=#{inspect port} " <>
       "data_byte_size=#{byte_size(data)}")
 
+    # parse the packet
+    state =
+      case RacingTelemetry.F122.Packets.from_binary(data) do
+        {:ok, packet} ->
+          Logger.info("f1_22_packet=#{inspect packet, pretty: true}")
+          maybe_sample_packet(packet, data, state)
+        error ->
+          Logger.error("f1_22_packet=#{inspect error}")
+          state
+      end
+
     # done
     {:noreply, state}
   end
@@ -80,5 +92,24 @@ defmodule RacingTelemetry.F122Server do
   end
 
   # Logic/Helpers
+
+  @doc false
+  def maybe_sample_packet(%{m_header: %{packet_type: packet_type}} = packet, data, state) do
+    case Enum.member?(state.packet_type_samples, packet_type) do
+      true -> state
+      false -> sample_packet(packet, data, state)
+    end
+  end
+  def maybe_sample_packet(_packet, _data, state) do
+    # not sure what type of packet this is
+    state
+  end
+
+  @doc false
+  def sample_packet(%{m_header: %{packet_type: packet_type}}, data, state) do
+    File.write!("/tmp/racing-telemetry-packet-sample.#{packet_type}.dat", data)
+    packet_type_samples = [packet_type|state.packet_type_samples]
+    %{state|packet_type_samples: packet_type_samples}
+  end
 
 end
