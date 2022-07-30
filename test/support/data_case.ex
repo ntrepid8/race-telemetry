@@ -24,6 +24,7 @@ defmodule RacingTelemetry.DataCase do
       import Ecto.Changeset
       import Ecto.Query
       import RacingTelemetry.DataCase
+      import RacingTelemetry.DataFixtures
     end
   end
 
