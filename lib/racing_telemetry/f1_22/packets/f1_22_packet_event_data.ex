@@ -64,7 +64,6 @@ defmodule RacingTelemetry.F122.Packets.F122PacketEventData do
     m_eventStringCode::binary-size(4),
     m_eventDetails::binary
   >>) do
-    Logger.warn("m_eventDetails_byte_size=#{byte_size(m_eventDetails)}")
     with {:ok, event_details} <- fetch_event_details(m_eventStringCode, m_eventDetails) do
       {:ok, %__MODULE__{
         m_header: ph0,
