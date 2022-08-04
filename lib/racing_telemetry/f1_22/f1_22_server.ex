@@ -5,6 +5,11 @@ defmodule RacingTelemetry.F122Server do
   """
   use GenServer, restart: :temporary
   require Logger
+  alias RacingTelemetry.F122.Packets.{
+    F122PacketHeader,
+    F122PacketMotionData,
+    F122PacketMotionCarMotion,
+  }
 
   defstruct [
     # config
@@ -46,18 +51,15 @@ defmodule RacingTelemetry.F122Server do
   end
 
   def handle_info({:udp, socket, address, port, data}, state) do
-    Logger.info(
-      "receive_data: " <>
-      "socket=#{inspect socket} " <>
-      "address=#{inspect address} " <>
-      "port=#{inspect port} " <>
-      "data_byte_size=#{byte_size(data)}")
-
     # parse the packet
     state =
       case RacingTelemetry.F122.Packets.from_binary(data) do
+        {:ok, %F122PacketMotionData{} = motion_data} ->
+          run_broadcast("player_car_motion_gForce", motion_data)
+          state
+
         {:ok, packet} ->
-          Logger.info("f1_22_packet=#{inspect packet, pretty: true}")
+          # Logger.info("f1_22_packet=#{inspect packet, pretty: true}")
           maybe_sample_packet(packet, data, state)
         error ->
           Logger.error("f1_22_packet=#{inspect error}")
@@ -92,6 +94,50 @@ defmodule RacingTelemetry.F122Server do
   end
 
   # Logic/Helpers
+
+  @doc false
+  def run_broadcast("player_car_motion_gForce", %F122PacketMotionData{} = motion_data) do
+    %F122PacketMotionData{
+      m_header: %F122PacketHeader{m_playerCarIndex: m_playerCarIndex},
+      m_carMotionData: m_carMotionData,
+    } = motion_data
+    %F122PacketMotionCarMotion{
+      m_gForceLateral: m_gForceLateral,
+      m_gForceLongitudinal: m_gForceLongitudinal,
+      m_gForceVertical: m_gForceVertical,
+    } = Enum.at(m_carMotionData, m_playerCarIndex)
+
+    # forward/aft
+    {m_gForceLongitudinalForward, m_gForceLongitudinalAft} =
+      case m_gForceLongitudinal < 0 do
+        true -> {(m_gForceLongitudinal * -1), 0.0}
+        false -> {0.0, m_gForceLongitudinal}
+      end
+
+    # left/right
+    {m_gForceLateralLeft, m_gForceLateralRight} =
+      case m_gForceLateral < 0 do
+        true -> {(m_gForceLateral * -1), 0.0}
+        false -> {0.0, m_gForceLateral}
+      end
+
+    # broadcast
+    Phoenix.PubSub.broadcast(
+      RacingTelemetry.PubSub,
+      "player_car_motion_gForce",
+      %{
+        topic: "player_car_motion_gForce",
+        data: %{
+          m_gForceLongitudinal: m_gForceLongitudinal,
+          m_gForceLongitudinalForward: m_gForceLongitudinalForward,
+          m_gForceLongitudinalAft: m_gForceLongitudinalAft,
+          m_gForceLateral: m_gForceLateral,
+          m_gForceLateralLeft: m_gForceLateralLeft,
+          m_gForceLateralRight: m_gForceLateralRight,
+          m_gForceVertical: m_gForceVertical,
+        }
+      })
+  end
 
   @doc false
   def maybe_sample_packet(%{m_header: %{packet_type: packet_type}} = packet, data, state) do
