@@ -13,9 +13,11 @@ defmodule RacingTelemetry.F122Server do
 
   defstruct [
     # config
-    listen_port: 24134,  # "F1" is the hex number 241 and "22" is the hex number 34
+    listen_port: 0,  # "F1" is the hex number 241 and "22" is the hex number 34
+    user_id: nil,
 
     # runtime
+    udp_clients: nil,
     listen_socket: nil,
     packet_type_samples: [],
 
@@ -35,8 +37,14 @@ defmodule RacingTelemetry.F122Server do
 
     # initialize state
     state = struct(%__MODULE__{}, init_arg)
-    with {:ok, socket} <- :gen_udp.open(state.listen_port, [:binary, active: true]) do
-      state = %{state|listen_socket: socket}
+    with {:ok, socket} <- udp_open(state.listen_port),
+      {:ok, listen_port} <- :inet.port(socket)
+    do
+      state = %{state|
+        udp_clients: MapSet.new(),
+        listen_socket: socket,
+        listen_port: listen_port,
+      }
       {:ok, state, {:continue, {:startup_tasks, []}}}
     end
   end
@@ -46,16 +54,59 @@ defmodule RacingTelemetry.F122Server do
   # Callbacks
 
   def handle_continue({:startup_tasks, []}, state) do
+    Logger.info("#{__MODULE__}: status=running user_id=#{state.user_id} listen_port=#{state.listen_port}")
 
     {:noreply, state, state.hibernate_timeout}
   end
 
+  # called when a handoff has been initiated due to changes
+  # in cluster topology, valid response values are:
+  #
+  #   - `:restart`, to simply restart the process on the new node
+  #   - `{:resume, state}`, to hand off some state to the new process
+  #   - `:ignore`, to leave the process running on its current node
+  #
+  def handle_call({:swarm, :begin_handoff}, _from, state) do
+    {:reply, {:resume, state}, state, state.hibernate_timeout}
+  end
+  def handle_call({:fetch_udp_clients, []}, _from, state) do
+    udp_clients = MapSet.to_list(state.udp_clients) |> Enum.sort()
+    {:reply, {:ok, udp_clients}, state, state.hibernate_timeout}
+  end
+  def handle_call({:fetch_udp_listen_port, []}, _from, state) do
+    {:reply, {:ok, state.listen_port}, state, state.hibernate_timeout}
+  end
+
+  # called after the process has been restarted on its new node,
+  # and the old process' state is being handed off. This is only
+  # sent if the return to `begin_handoff` was `{:resume, state}`.
+  # **NOTE**: This is called *after* the process is successfully started,
+  # so make sure to design your processes around this caveat if you
+  # wish to hand off state like this.
+  def handle_cast({:swarm, :end_handoff, _handoff_state}, state) do
+    # update state from DB if applicable
+    {:noreply, state, state, state.hibernate_timeout}
+  end
+  # called when a network split is healed and the local process
+  # should continue running, but a duplicate process on the other
+  # side of the split is handing off its state to us. You can choose
+  # to ignore the handoff state, or apply your own conflict resolution
+  # strategy
+  def handle_cast({:swarm, :resolve_conflict, _handoff_state}, state) do
+    # update state from DB if applicable
+    {:noreply, state, state, state.hibernate_timeout}
+  end
+
   def handle_info({:udp, socket, address, port, data}, state) do
+    # note the client
+    udp_client = "#{:inet.ntoa(address)}:#{port}"
+    state = %{state|udp_clients: MapSet.put(state.udp_clients, udp_client)}
+
     # parse the packet
     state =
       case RacingTelemetry.F122.Packets.from_binary(data) do
         {:ok, %F122PacketMotionData{} = motion_data} ->
-          run_broadcast("player_car_motion_gForce", motion_data)
+          run_broadcast("player_car_motion_gForce", motion_data, state)
           state
 
         {:ok, packet} ->
@@ -67,7 +118,13 @@ defmodule RacingTelemetry.F122Server do
       end
 
     # done
-    {:noreply, state}
+    {:noreply, state, state, state.hibernate_timeout}
+  end
+  # this message is sent when this process should die
+  # because it is being moved, use this as an opportunity
+  # to clean up
+  def handle_info({:swarm, :die}, state) do
+    {:stop, :shutdown, state}
   end
   def handle_info(:timeout, state) do
     {:noreply, state, :hibernate}
@@ -96,7 +153,7 @@ defmodule RacingTelemetry.F122Server do
   # Logic/Helpers
 
   @doc false
-  def run_broadcast("player_car_motion_gForce", %F122PacketMotionData{} = motion_data) do
+  def run_broadcast("player_car_motion_gForce", %F122PacketMotionData{} = motion_data, state) do
     %F122PacketMotionData{
       m_header: %F122PacketHeader{m_playerCarIndex: m_playerCarIndex},
       m_carMotionData: m_carMotionData,
@@ -122,21 +179,42 @@ defmodule RacingTelemetry.F122Server do
       end
 
     # broadcast
-    Phoenix.PubSub.broadcast(
-      RacingTelemetry.PubSub,
-      "player_car_motion_gForce",
-      %{
-        topic: "player_car_motion_gForce",
-        data: %{
-          m_gForceLongitudinal: m_gForceLongitudinal,
-          m_gForceLongitudinalForward: m_gForceLongitudinalForward,
-          m_gForceLongitudinalAft: m_gForceLongitudinalAft,
-          m_gForceLateral: m_gForceLateral,
-          m_gForceLateralLeft: m_gForceLateralLeft,
-          m_gForceLateralRight: m_gForceLateralRight,
-          m_gForceVertical: m_gForceVertical,
-        }
-      })
+    topic = "f1_22:/users/#{state.user_id}/player_car_motion_gForce"
+    payload = %{
+      topic: topic,
+      key: {"f1_22", "users", state.user_id, "player_car_motion_gForce"},
+      meta: %{
+        user_id: state.user_id,
+      },
+      data: %{
+        m_gForceLongitudinal: m_gForceLongitudinal,
+        m_gForceLongitudinalForward: m_gForceLongitudinalForward,
+        m_gForceLongitudinalAft: m_gForceLongitudinalAft,
+        m_gForceLateral: m_gForceLateral,
+        m_gForceLateralLeft: m_gForceLateralLeft,
+        m_gForceLateralRight: m_gForceLateralRight,
+        m_gForceVertical: m_gForceVertical,
+      }
+    }
+    Phoenix.PubSub.broadcast(RacingTelemetry.PubSub, topic, payload)
+  end
+  def run_broadcast("udp_clients", state) do
+    # get client list
+    udp_clients = MapSet.to_list(state.udp_clients) |> Enum.sort()
+
+    # broadcast
+    topic = "f1_22:/users/#{state.user_id}/udp_clients"
+    payload = %{
+      topic: topic,
+      key: {"f1_22", "users", state.user_id, "udp_clients"},
+      meta: %{
+        user_id: state.user_id,
+      },
+      data: %{
+       udp_clients: udp_clients,
+      }
+    }
+    Phoenix.PubSub.broadcast(RacingTelemetry.PubSub, topic, payload)
   end
 
   @doc false
@@ -156,6 +234,15 @@ defmodule RacingTelemetry.F122Server do
     File.write!("/tmp/racing-telemetry-packet-sample.#{packet_type}.dat", data)
     packet_type_samples = [packet_type|state.packet_type_samples]
     %{state|packet_type_samples: packet_type_samples}
+  end
+
+  # open the UDP port to listen for telemetry packets
+  defp udp_open(listen_port) do
+    case :gen_udp.open(listen_port, [:binary, active: true]) do
+      {:ok, socket} -> {:ok, socket}
+      {:error, :eaddrinuse} -> {:error, %{listen_port: ["port '#{listen_port}' is already in use"]}}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
 end

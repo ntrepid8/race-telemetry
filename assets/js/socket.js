@@ -61,7 +61,8 @@ let m_gForceLongitudinalAft = document.querySelector("#m_gForceLongitudinalAft")
 let m_gForceLateralLeft = document.querySelector("#m_gForceLateralLeft")
 let m_gForceLateralRight = document.querySelector("#m_gForceLateralRight")
 let m_gForceVertical = document.querySelector("#m_gForceVertical")
-
+let f1_22_udp_clients = document.querySelector("#f1_22_udp_clients")
+let f1_22_udp_listen = document.querySelector("#f1_22_udp_listen")
 
 // player_gForce_chart
 const player_gForce_chart_data = {
@@ -159,6 +160,16 @@ channel.on("player_car_motion_gForce", payload => {
   // player car vert
   player_gForce_chart_vert.data.datasets[0].data = [payload.m_gForceVertical];
   player_gForce_chart_vert.update();
+})
+
+// UDP clients update
+channel.on("udp_clients", payload => {
+  f1_22_udp_clients.textContent = payload.udp_clients.join(", ");
+})
+
+// UDP server listener update
+channel.on("udp_listen_port_update", payload => {
+  f1_22_udp_listen.textContent = `${window.location.hostname}:${payload.udp_listen_port}`;
 })
 
 channel.join()
