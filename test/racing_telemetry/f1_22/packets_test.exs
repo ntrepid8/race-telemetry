@@ -9,6 +9,8 @@ defmodule RacingTelemetry.F122.PacketsTest do
     F122PacketEventDetailButtonStatus,
     F122PacketMotionData,
     F122PacketMotionCarMotion,
+    F122PacketLapData,
+    F122PacketLapDataCarLapData,
   }
 
 
@@ -62,6 +64,60 @@ defmodule RacingTelemetry.F122.PacketsTest do
     test "lap_data" do
       data = read_fixture!("racing-telemetry-packet-sample.lap_data.dat")
       assert byte_size(data) == 972
+
+      assert {:ok, %F122PacketLapData{} = packet} = RT.F122.Packets.from_binary(data)
+      Logger.warn("packet=#{inspect packet, pretty: true}")
+      assert %F122PacketLapData{
+        m_header: %F122PacketHeader{
+          m_packetFormat: 2022,
+          m_gameMajorVersion: 1,
+          m_gameMinorVersion: 6,
+          m_packetVersion: 1,
+          m_packetId: 2,
+          m_sessionUID: 15722004913203710600,
+          m_frameIdentifier: 0,
+          m_playerCarIndex: 21,
+          m_secondaryPlayerCarIndex: 255,
+        },
+        m_lapData: m_lapData,
+        m_timeTrialPBCarIdx: 255,
+        m_timeTrialRivalCarIdx: 255,
+      } = packet
+
+      assert length(m_lapData) == 22
+      assert %F122PacketLapDataCarLapData{
+        car_index: 21,
+        current_lap_invalid: "valid",
+        driver_status: "in garage",
+        m_carPosition: 15,
+        m_currentLapInvalid: 0,
+        m_currentLapNum: 1,
+        m_currentLapTimeInMS: 0,
+        m_driverStatus: 0,
+        m_gridPosition: 1,
+        m_lapDistance: 208.49658203125,
+        m_lastLapTimeInMS: 0,
+        m_numPitStops: 0,
+        m_numUnservedDriveThroughPens: 0,
+        m_numUnservedStopGoPens: 0,
+        m_penalties: 0,
+        m_pitLaneTimeInLaneInMS: 0,
+        m_pitLaneTimerActive: 0,
+        m_pitStatus: 1,
+        m_pitStopShouldServePen: 0,
+        m_pitStopTimerInMS: 0,
+        m_resultStatus: 2,
+        m_safetyCarDelta: -0.0,
+        m_sector: 0,
+        m_sector1TimeInMS: 0,
+        m_sector2TimeInMS: 0,
+        m_totalDistance: 208.49658203125,
+        m_warnings: 0,
+        pit_lane_timer_active: "inactive",
+        pit_status: "pitting",
+        result_status: "active",
+        sector: 1
+      } = Enum.at(m_lapData, 21)
     end
 
     test "motion" do

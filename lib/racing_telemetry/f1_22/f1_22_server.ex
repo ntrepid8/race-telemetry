@@ -6,9 +6,13 @@ defmodule RacingTelemetry.F122Server do
   use GenServer, restart: :temporary
   require Logger
   alias RacingTelemetry.F122.Packets.{
+    F122Packet,
     F122PacketHeader,
     F122PacketMotionData,
     F122PacketMotionCarMotion,
+    F122PacketLapData,
+    F122PacketLapDataCarLapData,
+    F122PacketEventData,
   }
 
   defstruct [
@@ -105,13 +109,24 @@ defmodule RacingTelemetry.F122Server do
     # parse the packet
     state =
       case RacingTelemetry.F122.Packets.from_binary(data) do
+        # motion
         {:ok, %F122PacketMotionData{} = motion_data} ->
           run_broadcast("player_car_motion_gForce", motion_data, state)
           state
 
-        {:ok, packet} ->
+        # lap_Data
+        {:ok, %F122PacketLapData{} = _lap_data} ->
+          state
+
+        # event
+        {:ok, %F122PacketEventData{} = _event} ->
+          state
+
+        # generic packet: not parsing this packet type yet
+        {:ok, %F122Packet{} = packet} ->
           # Logger.info("f1_22_packet=#{inspect packet, pretty: true}")
           maybe_sample_packet(packet, data, state)
+
         error ->
           Logger.error("f1_22_packet=#{inspect error}")
           state

@@ -2,6 +2,8 @@ defmodule RacingTelemetry.F122.Packets.F122PacketHeader do
   @moduledoc """
   Standard packet header for F1 22
 
+  Size: 192 bits or 24 bytes
+
   """
 
   defstruct [

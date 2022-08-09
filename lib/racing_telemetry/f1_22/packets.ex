@@ -9,6 +9,7 @@ defmodule RacingTelemetry.F122.Packets do
     F122PacketHeader,
     F122PacketEventData,
     F122PacketMotionData,
+    F122PacketLapData,
   }
 
 
@@ -27,6 +28,9 @@ defmodule RacingTelemetry.F122.Packets do
   end
   def from_binary(%F122PacketHeader{packet_type: "motion"} = ph0, data) do
     F122PacketMotionData.from_binary(ph0, data)
+  end
+  def from_binary(%F122PacketHeader{packet_type: "lap_data"} = ph0, data) do
+    F122PacketLapData.from_binary(ph0, data)
   end
   def from_binary(%F122PacketHeader{} = ph0, _data) do
     {:ok, %F122Packet{m_header: ph0}}
