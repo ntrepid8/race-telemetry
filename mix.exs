@@ -46,6 +46,7 @@ defmodule RacingTelemetry.MixProject do
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
       {:swarm, "~> 3.4"},
+      {:elixir_uuid, "~> 1.2"},
     ]
   end
 
