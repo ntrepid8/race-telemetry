@@ -13,6 +13,8 @@ defmodule RacingTelemetry.Application do
       RacingTelemetryWeb.Telemetry,
       # Start the PubSub system
       {Phoenix.PubSub, name: RacingTelemetry.PubSub},
+      # Task supervisor
+      {Task.Supervisor, name: RacingTelemetry.TaskSupervisor},
       # Start the Endpoint (http/https)
       RacingTelemetryWeb.Endpoint,
       # Start a worker by calling: RacingTelemetry.Worker.start_link(arg)

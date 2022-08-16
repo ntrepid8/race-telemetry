@@ -5,6 +5,7 @@ defmodule RacingTelemetry.F122Server do
   """
   use GenServer, restart: :temporary
   require Logger
+  alias RacingTelemetry.F122.Models.F122LapDataPackets
   alias RacingTelemetry.F122.Packets.{
     F122Packet,
     F122PacketHeader,
@@ -24,6 +25,7 @@ defmodule RacingTelemetry.F122Server do
     udp_clients: nil,
     listen_socket: nil,
     packet_type_samples: [],
+    f1_22_packets_lap_data: [],
 
     # GenServer stuff
     hibernate_timeout: 15_000,  # hibernate after 15 seconds of inactivity
@@ -115,8 +117,8 @@ defmodule RacingTelemetry.F122Server do
           state
 
         # lap_Data
-        {:ok, %F122PacketLapData{} = _lap_data} ->
-          state
+        {:ok, %F122PacketLapData{} = lap_data} ->
+          %{state|f1_22_packets_lap_data: [lap_data|state.f1_22_packets_lap_data]}
 
         # event
         {:ok, %F122PacketEventData{} = _event} ->
@@ -132,8 +134,15 @@ defmodule RacingTelemetry.F122Server do
           state
       end
 
+    # store lap_data packets
+    state =
+      case length(state.f1_22_packets_lap_data) >= 10 do
+        true -> store_f1_22_lap_data_packets(state)
+        false -> state
+      end
+
     # done
-    {:noreply, state, state, state.hibernate_timeout}
+    {:noreply, state, state.hibernate_timeout}
   end
   # this message is sent when this process should die
   # because it is being moved, use this as an opportunity
@@ -166,6 +175,20 @@ defmodule RacingTelemetry.F122Server do
   end
 
   # Logic/Helpers
+
+  @doc false
+  def store_f1_22_lap_data_packets(state) do
+    items = state.f1_22_packets_lap_data
+    Task.Supervisor.start_child(RacingTelemetry.TaskSupervisor, fn ->
+      Enum.each(items, fn item ->
+        case F122LapDataPackets.create_f1_22_lap_data_packet(item) do
+          {:ok, _} -> :ok
+          {:error, reason} -> Logger.warning("store_f1_22_lap_data_packets: reason=#{inspect reason}")
+        end
+      end)
+    end)
+    %{state|f1_22_packets_lap_data: []}
+  end
 
   @doc false
   def run_broadcast("player_car_motion_gForce", %F122PacketMotionData{} = motion_data, state) do
