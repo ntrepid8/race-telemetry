@@ -83,7 +83,7 @@ defmodule RacingTelemetry.F122.Models.F122PacketHeadersTest do
     test "count_f1_22_packet_headers/1 - success" do
       data = read_fixture!("racing-telemetry-packet-sample.event.dat")
       assert {:ok, f1_22_packet_event_data} = RT.F122.Packets.from_binary(data)
-      assert {:ok, f1_22_packet_header} =
+      assert {:ok, _f1_22_packet_header} =
         F122PacketHeaders.create_f1_22_packet_header(f1_22_packet_event_data.m_header)
 
       opts = [m_sessionUID: 15722004913203710600]

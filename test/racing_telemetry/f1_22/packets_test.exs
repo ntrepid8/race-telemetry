@@ -3,7 +3,6 @@ defmodule RacingTelemetry.F122.PacketsTest do
   require Logger
   alias RacingTelemetry, as: RT
   alias RacingTelemetry.F122.Packets.{
-    F122Packet,
     F122PacketHeader,
     F122PacketEventData,
     F122PacketEventDetailButtonStatus,
