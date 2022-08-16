@@ -75,8 +75,8 @@ defmodule RacingTelemetry.F122.Packets.F122PacketMotionCarMotion do
       car_index: car_index,
     }}
   end
-  def from_binary(data) do
-    Logger.error("data=#{inspect data}")
+  def from_binary(car_index, data) do
+    Logger.error("car_index=#{car_index} data_byte_size=#{byte_size(data)} data=#{inspect data}")
     {:error, %{packet_motion_car_motion: ["is invalid"]}}
   end
 

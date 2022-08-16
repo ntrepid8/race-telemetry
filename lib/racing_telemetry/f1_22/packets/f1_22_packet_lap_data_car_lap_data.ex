@@ -111,8 +111,8 @@ defmodule RacingTelemetry.F122.Packets.F122PacketLapDataCarLapData do
       pit_lane_timer_active: get_pit_lane_timer_active(m_pitLaneTimerActive),
     }}
   end
-  def from_binary(data) do
-    Logger.error("data=#{inspect data}")
+  def from_binary(car_index, data) do
+    Logger.error("car_index=#{car_index} data_byte_size=#{byte_size(data)} data=#{inspect data}")
     {:error, %{packet_lap_data_car_lap_data: ["is invalid"]}}
   end
 
