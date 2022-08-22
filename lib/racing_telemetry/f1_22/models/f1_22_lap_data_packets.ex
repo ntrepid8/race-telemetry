@@ -386,6 +386,33 @@ defmodule RacingTelemetry.F122.Models.F122LapDataPackets do
       order_by: [{:m_frameIdentifier, :asc}, {:m_sessionTime, :desc}],
     ]
     find_f1_22_lap_data_packet_cars(opts)
+    |> RT.F122.Filter.filter_car_flashback()
+    |> filter_linear_distance()
+  end
+
+  @doc false
+  def filter_linear_distance(items) do
+    # require m_totalDistance to move in one direction
+    items =
+      Enum.sort_by(items, fn i -> {i.m_header.m_frameIdentifier, i.m_header.m_sessionTime} end)
+      |> Enum.reverse()
+
+    item_0 = Enum.at(items, 0)
+    filter_linear_distance(items, item_0.m_totalDistance, [])
+  end
+  def filter_linear_distance([], _m_totalDistance, accum) do
+    # done
+    accum
+  end
+  def filter_linear_distance([item|items], m_totalDistance, accum) do
+    # m_totalDistance to always move in the same direction (e.g. must always decrease as time moves backward)
+    case item.m_totalDistance <= m_totalDistance do
+      # next distance is linear
+      true -> filter_linear_distance(items, item.m_totalDistance, [item|accum])
+
+      # next distance is not linear
+      false -> filter_linear_distance(items, m_totalDistance, accum)
+    end
   end
 
 end

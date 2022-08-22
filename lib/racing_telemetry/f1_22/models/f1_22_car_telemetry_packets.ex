@@ -305,6 +305,7 @@ defmodule RacingTelemetry.F122.Models.F122CarTelemetryPackets do
       order_by: [{:m_frameIdentifier, :asc}, {:m_sessionTime, :desc}],
     ]
     find_f1_22_car_telemetry_packet_cars(opts)
+    |> RT.F122.Filter.filter_car_flashback()
   end
 
 end

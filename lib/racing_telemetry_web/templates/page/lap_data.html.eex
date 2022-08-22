@@ -1,6 +1,18 @@
 <div class="row">
   <div class="column">
     <h2>Racing Telemetry: F1 22 Lap Data</h2>
+    <ul>
+      <li>session: <%= @data.m_sessionUID %></li>
+      <li>car_index: <%= @data.car_index %></li>
+      <li>lap_number: <%= @data.lap_number %></li>
+    </ul>
+  </div>
+</div>
+
+<div class="row">
+  <div class="column">
+    Next: <%= link "Lap #{@data.lap_number+1}",
+      to: Routes.page_path(@conn, :show_lap_data, @data.m_sessionUID, @data.car_index, (@data.lap_number+1)) %>
   </div>
 </div>
 

@@ -3,10 +3,13 @@ defmodule RacingTelemetry.F122 do
   F1 22 Context.
 
   """
+  use RacingTelemetry.Query
   require Logger
+  alias RacingTelemetry, as: RT
   alias RacingTelemetry.F122Supervisor
   alias RacingTelemetry.F122.Models.F122LapDataPackets
   alias RacingTelemetry.F122.Models.F122CarTelemetryPackets
+  alias RacingTelemetry.F122.Models.F122PacketHeaders.F122PacketHeader
 
   @timeout 5_000
 
@@ -182,6 +185,10 @@ defmodule RacingTelemetry.F122 do
     end)
   end
 
+  @doc """
+  Fetch data to plot a lap.
+
+  """
   def fetch_car_telemetry_plot_data(m_sessionUID, car_index, lap_number) do
     with {:ok, data} <- fetch_f1_22_lap_data(m_sessionUID, car_index, lap_number) do
       # speed KPH
@@ -254,6 +261,26 @@ defmodule RacingTelemetry.F122 do
         drs: drs_plot_data,
       }}
     end
+  end
+
+  @doc """
+  Fetch a list of available F1 22 sessions.
+
+  """
+  def find_f1_22_sessions() do
+    Ecto.Query.from(i in F122PacketHeader,
+      where: i.packet_type == ^"car_telemetry",
+      distinct: [i.m_sessionUID],
+      order_by: [i.inserted_at])
+    |> RT.Repo.all()
+    |> Enum.map(fn i ->
+      %{
+        m_sessionUID: Decimal.to_integer(i.m_sessionUID),
+        inserted_at: i.inserted_at,
+        m_playerCarIndex: i.m_playerCarIndex,
+      }
+    end)
+    |> Enum.sort_by(fn i -> DateTime.to_unix(i.inserted_at) end)
   end
 
 end

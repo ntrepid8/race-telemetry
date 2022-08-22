@@ -6,14 +6,29 @@ defmodule RacingTelemetryWeb.PageController do
     render(conn, "index.html")
   end
 
-  def show_lap_data(conn, _params) do
-    m_sessionUID = 4319743169360394010
-    car_index = 21
-    lap_number = 4
+  def index_sessions(conn, _params) do
+    data = %{
+      sessions: RT.F122.find_f1_22_sessions(),
+    }
+    render(conn, "sessions.html", data: data)
+  end
+
+  def show_lap_data(conn, %{"m_sessionUID" => m_sessionUID, "car_index" => car_index, "lap_number" => lap_number}) do
+    # m_sessionUID = 4319743169360394010
+    # car_index = 21
+    # lap_number = 4
+
+    m_sessionUID = String.to_integer(m_sessionUID)
+    car_index = String.to_integer(car_index)
+    lap_number = String.to_integer(lap_number)
     with {:ok, plot_data} <- RT.F122.fetch_car_telemetry_plot_data(m_sessionUID, car_index, lap_number) do
       # format plot_data
       data =
         %{
+          m_sessionUID: m_sessionUID,
+          car_index: car_index,
+          lap_number: lap_number,
+          # plot datasets
           speed: %{
             datasets: [
               %{

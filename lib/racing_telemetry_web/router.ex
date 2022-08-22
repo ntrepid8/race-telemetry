@@ -17,8 +17,9 @@ defmodule RacingTelemetryWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :index
-    get "/lap-data", PageController, :show_lap_data
+    get "/sessions", PageController, :index_sessions
     get "/real-time", PageController, :show_real_time
+    get "/lap-data/:m_sessionUID/:car_index/:lap_number", PageController, :show_lap_data
   end
 
   # Other scopes may use custom stacks.
