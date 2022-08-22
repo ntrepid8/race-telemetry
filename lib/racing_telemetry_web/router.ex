@@ -18,6 +18,7 @@ defmodule RacingTelemetryWeb.Router do
 
     get "/", PageController, :index
     get "/lap-data", PageController, :show_lap_data
+    get "/real-time", PageController, :show_real_time
   end
 
   # Other scopes may use custom stacks.

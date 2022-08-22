@@ -9,4 +9,8 @@ defmodule RacingTelemetryWeb.PageController do
     render(conn, "lap_data.html")
   end
 
+  def show_real_time(conn, _params) do
+    render(conn, "real_time.html")
+  end
+
 end

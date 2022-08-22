@@ -19,6 +19,7 @@ module.exports = (env, options) => {
     entry: {
       'app': glob.sync('./vendor/**/*.js').concat(['./js/app.js']),
       'lap_data_charts': glob.sync('./vendor/**/*.js').concat(['./js/lap_data_charts.js']),
+      'real_time': glob.sync('./vendor/**/*.js').concat(['./js/real_time.js']),
     },
     output: {
       filename: '[name].js',
