@@ -5,7 +5,10 @@ defmodule RacingTelemetry.F122Server do
   """
   use GenServer, restart: :temporary
   require Logger
-  alias RacingTelemetry.F122.Models.F122LapDataPackets
+  alias RacingTelemetry.F122.Models.{
+    F122CarTelemetryPackets,
+    F122LapDataPackets,
+  }
   alias RacingTelemetry.F122.Packets.{
     F122Packet,
     F122PacketHeader,
@@ -14,6 +17,7 @@ defmodule RacingTelemetry.F122Server do
     F122PacketLapData,
     F122PacketLapDataCarLapData,
     F122PacketEventData,
+    F122PacketCarTelemetry,
   }
 
   defstruct [
@@ -26,6 +30,7 @@ defmodule RacingTelemetry.F122Server do
     listen_socket: nil,
     packet_type_samples: [],
     f1_22_packets_lap_data: [],
+    f1_22_packets_car_telemetry: [],
 
     # GenServer stuff
     hibernate_timeout: 15_000,  # hibernate after 15 seconds of inactivity
@@ -120,6 +125,10 @@ defmodule RacingTelemetry.F122Server do
         {:ok, %F122PacketLapData{} = lap_data} ->
           %{state|f1_22_packets_lap_data: [lap_data|state.f1_22_packets_lap_data]}
 
+        # car_telemetry
+        {:ok, %F122PacketCarTelemetry{} = car_telemetry} ->
+          %{state|f1_22_packets_car_telemetry: [car_telemetry|state.f1_22_packets_car_telemetry]}
+
         # event
         {:ok, %F122PacketEventData{} = _event} ->
           state
@@ -138,6 +147,13 @@ defmodule RacingTelemetry.F122Server do
     state =
       case length(state.f1_22_packets_lap_data) >= 10 do
         true -> store_f1_22_lap_data_packets(state)
+        false -> state
+      end
+
+    # store car_telemetry packets
+    state =
+      case length(state.f1_22_packets_car_telemetry) >= 10 do
+        true -> store_f1_22_lap_telemetry_packets(state)
         false -> state
       end
 
@@ -188,6 +204,20 @@ defmodule RacingTelemetry.F122Server do
       end)
     end)
     %{state|f1_22_packets_lap_data: []}
+  end
+
+  @doc false
+  def store_f1_22_lap_telemetry_packets(state) do
+    items = state.f1_22_packets_car_telemetry
+    Task.Supervisor.start_child(RacingTelemetry.TaskSupervisor, fn ->
+      Enum.each(items, fn item ->
+        case F122CarTelemetryPackets.create_f1_22_car_telemetry_packet(item) do
+          {:ok, _} -> :ok
+          {:error, reason} -> Logger.warning("store_f1_22_lap_telemetry_packets: reason=#{inspect reason}")
+        end
+      end)
+    end)
+    %{state|f1_22_packets_car_telemetry: []}
   end
 
   @doc false

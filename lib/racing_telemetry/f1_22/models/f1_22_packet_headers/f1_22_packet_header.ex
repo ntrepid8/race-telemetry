@@ -86,4 +86,33 @@ defmodule RacingTelemetry.F122.Models.F122PacketHeaders.F122PacketHeader do
     |> validate_inclusion(:packet_type, @packet_type_options)
   end
 
+  @doc """
+  Return a list of keys for use as a CSV header.
+
+  """
+  def get_csv_header() do
+    [
+      :m_packetFormat,
+      :m_gameMajorVersion,
+      :m_gameMinorVersion,
+      :m_packetVersion,
+      :m_packetId,
+      :m_sessionUID,
+      :m_sessionTime,
+      :m_frameIdentifier,
+      :m_playerCarIndex,
+      :m_secondaryPlayerCarIndex,
+      :packet_type,
+    ]
+  end
+
+  @doc """
+  Output as a list of values for use as a row in a CSV.
+
+  """
+  def to_csv_row(%__MODULE__{} = data) do
+    get_csv_header()
+    |> Enum.map(fn key -> Map.get(data, key) end)
+  end
+
 end

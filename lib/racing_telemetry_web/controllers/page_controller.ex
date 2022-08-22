@@ -4,4 +4,9 @@ defmodule RacingTelemetryWeb.PageController do
   def index(conn, _params) do
     render(conn, "index.html")
   end
+
+  def show_lap_data(conn, _params) do
+    render(conn, "lap_data.html")
+  end
+
 end

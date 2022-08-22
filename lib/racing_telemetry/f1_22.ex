@@ -5,6 +5,8 @@ defmodule RacingTelemetry.F122 do
   """
   require Logger
   alias RacingTelemetry.F122Supervisor
+  alias RacingTelemetry.F122.Models.F122LapDataPackets
+  alias RacingTelemetry.F122.Models.F122CarTelemetryPackets
 
   @timeout 5_000
 
@@ -126,6 +128,31 @@ defmodule RacingTelemetry.F122 do
     timeout = Keyword.get(opts, :timeout) || @timeout
     with {:ok, pid} <- fetch_or_start_worker(user_id) do
       GenServer.call(pid, {:fetch_udp_listen_port, []}, timeout)
+    end
+  end
+
+  @doc """
+  Fetch lap_data for a given user/session/lap_number/car_index.
+
+  """
+  def fetch_f1_22_lap_data(m_sessionUID, car_index, lap_number) do
+    with {:ok, %{first: ld_first, last: ld_last}} <-
+        F122LapDataPackets.fetch_f1_22_lap_data_packet_car_lap_first_and_last(m_sessionUID, car_index, lap_number)
+    do
+      lap_data = F122LapDataPackets.find_f1_22_lap_data_packet_car_lap_records(m_sessionUID, car_index, lap_number)
+      car_telemetry =
+        F122CarTelemetryPackets.find_f1_22_car_telemetry_packet_car_frames(
+          m_sessionUID,
+          car_index,
+          ld_first.m_header.m_frameIdentifier,
+          ld_last.m_header.m_frameIdentifier)
+      # done
+      {:ok, %{
+        lap_data_first: ld_first,
+        lap_data_last: ld_last,
+        lap_data: lap_data,
+        car_telemetry: car_telemetry,
+      }}
     end
   end
 

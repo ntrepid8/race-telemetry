@@ -79,6 +79,4 @@ defmodule RacingTelemetry.QueryOptions do
     end
   end
 
-
-
 end

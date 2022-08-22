@@ -82,4 +82,70 @@ defmodule RacingTelemetry.Query do
       do: {:ok, query}
   end
 
+  @doc false
+  def find_query_m_header_m_sessionUID(q, opts) do
+    case Keyword.fetch(opts, :m_sessionUID) do
+      {:ok, val} ->
+        q =
+          ensure_join(q, :inner, :m_header)
+          |> Ecto.Query.where(as(:m_header).m_sessionUID == ^val)
+        {:ok, q}
+      _not_found ->
+        {:ok, q}
+    end
+  end
+
+  @doc false
+  def find_query_m_header_m_frameIdentifier(q, opts) do
+    case Keyword.fetch(opts, :m_frameIdentifier) do
+      {:ok, val} ->
+        q =
+          ensure_join(q, :inner, :m_header)
+          |> Ecto.Query.where(as(:m_header).m_frameIdentifier == ^val)
+        {:ok, q}
+      _not_found ->
+        {:ok, q}
+    end
+  end
+
+  @doc false
+  def find_query_m_header_m_frameIdentifier_gte(q, opts) do
+    case Keyword.fetch(opts, :m_frameIdentifier_gte) do
+      {:ok, val} ->
+        q =
+          ensure_join(q, :inner, :m_header)
+          |> Ecto.Query.where(as(:m_header).m_frameIdentifier >= ^val)
+        {:ok, q}
+      _not_found ->
+        {:ok, q}
+    end
+  end
+
+  @doc false
+  def find_query_m_header_m_frameIdentifier_lte(q, opts) do
+    case Keyword.fetch(opts, :m_frameIdentifier_lte) do
+      {:ok, val} ->
+        q =
+          ensure_join(q, :inner, :m_header)
+          |> Ecto.Query.where(as(:m_header).m_frameIdentifier <= ^val)
+        {:ok, q}
+      _not_found ->
+        {:ok, q}
+    end
+  end
+
+  @doc false
+  def find_query_m_header_order_by(q) do
+    q
+    |> ensure_join(:inner, :m_header)
+    |> Ecto.Query.order_by([{:asc, as(:m_header).m_frameIdentifier}, {:desc, as(:m_header).m_sessionTime}])
+  end
+
+  @doc false
+  def find_query_m_header_preload_defaults(q) do
+    q
+    |> ensure_join(:inner, :m_header)
+    |> Ecto.Query.preload([m_header: m_header], [m_header: m_header])
+  end
+
 end
