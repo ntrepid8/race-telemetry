@@ -34,3 +34,41 @@
   display: block;
   margin: -1rem 0 2rem;
 }
+
+// Changes
+.container {
+  max-width: 100%;
+  margin: 0 2.0rem;
+  padding: 0 2.0rem;
+  position: relative;
+  width: 100%
+}
+.row-wide {
+  width: 100%;
+}
+
+// Charts
+.speed-chart-container {
+  height: 20vh;
+  width: 100%;
+}
+.gear-chart-container {
+  height: 10vh;
+  width: 100%;
+}
+.steer-chart-container {
+  height: 10vh;
+  width: 100%;
+}
+.throttle-chart-container {
+  height: 10vh;
+  width: 100%;
+}
+.brake-chart-container {
+  height: 10vh;
+  width: 100%;
+}
+.drs-chart-container {
+  height: 10vh;
+  width: 100%;
+}
