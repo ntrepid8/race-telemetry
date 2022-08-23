@@ -386,32 +386,42 @@ defmodule RacingTelemetry.F122.Models.F122LapDataPackets do
       order_by: [{:m_frameIdentifier, :asc}, {:m_sessionTime, :desc}],
     ]
     find_f1_22_lap_data_packet_cars(opts)
-    |> RT.F122.Filter.filter_car_flashback()
     |> filter_linear_distance()
+    |> Enum.sort_by(fn i ->
+      {i.m_totalDistance, i.m_currentLapNum, i.m_header.m_frameIdentifier, i.m_header.m_sessionTime, i.serial_number}
+    end)
   end
 
   @doc false
   def filter_linear_distance(items) do
     # require m_totalDistance to move in one direction
     items =
-      Enum.sort_by(items, fn i -> {i.m_header.m_frameIdentifier, i.m_header.m_sessionTime} end)
+      Enum.sort_by(items, fn i ->
+        {i.m_totalDistance, i.m_currentLapNum, i.m_header.m_frameIdentifier, i.m_header.m_sessionTime}
+      end)
       |> Enum.reverse()
 
     item_0 = Enum.at(items, 0)
-    filter_linear_distance(items, item_0.m_totalDistance, [])
+    filter_linear_distance(items, Enum.at(items, 0), [])
   end
-  def filter_linear_distance([], _m_totalDistance, accum) do
+  def filter_linear_distance([], _cursor, accum) do
     # done
     accum
   end
-  def filter_linear_distance([item|items], m_totalDistance, accum) do
+  def filter_linear_distance([item|items], cursor, accum) do
     # m_totalDistance to always move in the same direction (e.g. must always decrease as time moves backward)
-    case item.m_totalDistance <= m_totalDistance do
+    conditions = [
+      (item.m_totalDistance <= cursor.m_totalDistance),
+      (item.m_currentLapNum <= cursor.m_currentLapNum),
+      (item.m_header.m_frameIdentifier <= cursor.m_header.m_frameIdentifier),
+      (item.m_header.m_sessionTime <= cursor.m_header.m_sessionTime),
+    ]
+    case Enum.all?(conditions) do
       # next distance is linear
-      true -> filter_linear_distance(items, item.m_totalDistance, [item|accum])
+      true -> filter_linear_distance(items, item, [item|accum])
 
       # next distance is not linear
-      false -> filter_linear_distance(items, m_totalDistance, accum)
+      false -> filter_linear_distance(items, cursor, accum)
     end
   end
 
