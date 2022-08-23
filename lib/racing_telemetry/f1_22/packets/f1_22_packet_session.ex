@@ -11,7 +11,7 @@ defmodule RacingTelemetry.F122.Packets.F122PacketSession do
   alias RacingTelemetry.F122.Packets.{
     F122PacketHeader,
     F122PacketSessionMarshalZone,
-    F122PacketSessionWeatherForcast,
+    F122PacketSessionWeatherForecast,
   }
 
   @session_type_ids %{
@@ -335,7 +335,7 @@ defmodule RacingTelemetry.F122.Packets.F122PacketSession do
     {:ok, Enum.reverse(accum)}
   end
   def split_weather_forecast_samples(<<item::binary-size(8), rest::binary>>, count, accum) do
-    with {:ok, item} <- F122PacketSessionWeatherForcast.from_binary(item),
+    with {:ok, item} <- F122PacketSessionWeatherForecast.from_binary(item),
       do: split_weather_forecast_samples(rest, count-1, [item|accum])
   end
 

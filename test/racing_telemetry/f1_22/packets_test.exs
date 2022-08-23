@@ -14,7 +14,7 @@ defmodule RacingTelemetry.F122.PacketsTest do
     F122PacketCarTelemetryCar,
     F122PacketSession,
     F122PacketSessionMarshalZone,
-    F122PacketSessionWeatherForcast,
+    F122PacketSessionWeatherForecast,
   }
 
 
@@ -319,7 +319,7 @@ defmodule RacingTelemetry.F122.PacketsTest do
 
       Logger.warn("m_weatherForecastSamples=#{length(m_weatherForecastSamples)}")
       assert length(m_weatherForecastSamples) == 38
-      assert %F122PacketSessionWeatherForcast{
+      assert %F122PacketSessionWeatherForecast{
         m_airTemperature: 22,
         m_airTemperatureChange: 2,
         m_rainPercentage: 16,

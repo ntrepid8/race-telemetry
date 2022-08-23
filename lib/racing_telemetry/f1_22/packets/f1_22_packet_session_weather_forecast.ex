@@ -1,6 +1,6 @@
-defmodule RacingTelemetry.F122.Packets.F122PacketSessionWeatherForcast do
+defmodule RacingTelemetry.F122.Packets.F122PacketSessionWeatherForecast do
   @moduledoc """
-  F122PacketSessionWeatherForcast
+  F122PacketSessionWeatherForecast
 
   Size: 64 bits / 8 Bytes
 
