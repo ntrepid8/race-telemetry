@@ -8,7 +8,7 @@
   <div class="column">
     <ul>
       <li><%= link "Real Time Telemetry", to: Routes.page_path(@conn, :show_real_time) %></li>
-      <li><%= link "Lap Data", to: Routes.page_path(@conn, :show_lap_data) %></li>
+      <li><%= link "Sessions", to: Routes.page_path(@conn, :index_sessions) %></li>
     </ul>
   </div>
 </div>

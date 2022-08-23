@@ -12,6 +12,9 @@ defmodule RacingTelemetry.F122.PacketsTest do
     F122PacketLapDataCarLapData,
     F122PacketCarTelemetry,
     F122PacketCarTelemetryCar,
+    F122PacketSession,
+    F122PacketSessionMarshalZone,
+    F122PacketSessionWeatherForcast,
   }
 
 
@@ -236,6 +239,96 @@ defmodule RacingTelemetry.F122.PacketsTest do
     test "session" do
       data = read_fixture!("racing-telemetry-packet-sample.session.dat")
       assert byte_size(data) == 632
+
+      assert {:ok, %F122PacketSession{} = packet} = RT.F122.Packets.from_binary(data)
+      Logger.warn("packet=#{inspect packet, pretty: true}")
+      assert %F122PacketSession{
+        m_header: %F122PacketHeader{
+          m_packetFormat: 2022,
+          m_gameMajorVersion: 1,
+          m_gameMinorVersion: 6,
+          m_packetVersion: 1,
+          m_packetId: 1,
+          m_sessionUID: 15722004913203710600,
+          m_frameIdentifier: 0,
+          m_playerCarIndex: 21,
+          m_secondaryPlayerCarIndex: 255,
+        },
+
+        m_DRSAssist: 1,
+        m_ERSAssist: 1,
+        m_aiDifficulty: 37,
+        m_airTemperature: 22,
+        m_brakingAssist: 0,
+        m_dynamicRacingLine: 2,
+        m_dynamicRacingLineType: 1,
+        m_forecastAccuracy: 0,
+        m_formula: 0,
+        m_gameMode: 19,
+        m_gamePaused: 0,
+        m_gearboxAssist: 3,
+        m_isSpectating: 0,
+        m_marshalZones: m_marshalZones,
+        m_networkGame: 0,
+        m_numMarshalZones: 18,
+        m_numWeatherForecastSamples: 38,
+        m_pitAssist: 1,
+        m_pitReleaseAssist: 1,
+        m_pitSpeedLimit: 80,
+        m_pitStopRejoinPosition: 0,
+        m_pitStopWindowIdealLap: 0,
+        m_pitStopWindowLatestLap: 0,
+        m_ruleSet: 0,
+        m_safetyCarStatus: 0,
+        m_seasonLinkIdentifier: 2771600820,
+        m_sessionDuration: 1800,
+        m_sessionLength: 0,
+        m_sessionLinkIdentifier: 2771601120,
+        m_sessionTimeLeft: 1800,
+        m_sessionType: 1,
+        m_sliProNativeSupport: 0,
+        m_spectatorCarIndex: 255,
+        m_steeringAssist: 0,
+        m_timeOfDay: 750,
+        m_totalLaps: 1,
+        m_trackId: 27,
+        m_trackLength: 4910,
+        m_trackTemperature: 29,
+        m_weather: 2,
+        m_weatherForecastSamples: m_weatherForecastSamples,
+        m_weekendLinkIdentifier: 2771601120,
+        dynamic_racing_line: "full",
+        forecast_accuracy: "Perfect",
+        formula: "F1 Modern",
+        game_mode: "Career '22",
+        network_game: "offline",
+        ruleset: "Practice & Qualifying",
+        safety_car_status: "no safety car",
+        session_length: "None",
+        session_type: "P1",
+        track: "Imola",
+
+      } = packet
+
+      Logger.warn("m_marshalZones=#{length(m_marshalZones)}")
+      assert length(m_marshalZones) == 18
+      assert %F122PacketSessionMarshalZone{
+        m_zoneFlag: 0,
+        m_zoneStart: 0.0
+      } = Enum.at(m_marshalZones, 0)
+
+      Logger.warn("m_weatherForecastSamples=#{length(m_weatherForecastSamples)}")
+      assert length(m_weatherForecastSamples) == 38
+      assert %F122PacketSessionWeatherForcast{
+        m_airTemperature: 22,
+        m_airTemperatureChange: 2,
+        m_rainPercentage: 16,
+        m_sessionType: 1,
+        m_timeOffset: 0,
+        m_trackTemperature: 30,
+        m_trackTemperatureChange: 2,
+        m_weather: 2,
+      } = Enum.at(m_weatherForecastSamples, 0)
     end
 
     test "session_history" do

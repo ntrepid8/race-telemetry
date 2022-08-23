@@ -18,6 +18,7 @@ defmodule RacingTelemetry.F122Server do
     F122PacketLapDataCarLapData,
     F122PacketEventData,
     F122PacketCarTelemetry,
+    F122PacketSession,
   }
 
   defstruct [
@@ -131,6 +132,10 @@ defmodule RacingTelemetry.F122Server do
 
         # event
         {:ok, %F122PacketEventData{} = _event} ->
+          state
+
+        # session
+        {:ok, %F122PacketSession{} = _session} ->
           state
 
         # generic packet: not parsing this packet type yet
