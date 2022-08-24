@@ -8,6 +8,7 @@ defmodule RacingTelemetry.F122Server do
   alias RacingTelemetry.F122.Models.{
     F122CarTelemetryPackets,
     F122LapDataPackets,
+    F122SessionPackets,
   }
   alias RacingTelemetry.F122.Packets.{
     F122Packet,
@@ -32,6 +33,7 @@ defmodule RacingTelemetry.F122Server do
     packet_type_samples: [],
     f1_22_packets_lap_data: [],
     f1_22_packets_car_telemetry: [],
+    f1_22_packets_session: [],
 
     # GenServer stuff
     hibernate_timeout: 15_000,  # hibernate after 15 seconds of inactivity
@@ -135,8 +137,8 @@ defmodule RacingTelemetry.F122Server do
           state
 
         # session
-        {:ok, %F122PacketSession{} = _session} ->
-          state
+        {:ok, %F122PacketSession{} = session} ->
+          %{state|f1_22_packets_session: [session|state.f1_22_packets_session]}
 
         # generic packet: not parsing this packet type yet
         {:ok, %F122Packet{} = packet} ->
@@ -159,6 +161,13 @@ defmodule RacingTelemetry.F122Server do
     state =
       case length(state.f1_22_packets_car_telemetry) >= 10 do
         true -> store_f1_22_lap_telemetry_packets(state)
+        false -> state
+      end
+
+    # store session packets
+    state =
+      case length(state.f1_22_packets_session) >= 10 do
+        true -> store_f1_22_session_packets(state)
         false -> state
       end
 
@@ -196,6 +205,20 @@ defmodule RacingTelemetry.F122Server do
   end
 
   # Logic/Helpers
+
+  @doc false
+  def store_f1_22_session_packets(state) do
+    items = state.f1_22_packets_session
+    Task.Supervisor.start_child(RacingTelemetry.TaskSupervisor, fn ->
+      Enum.each(items, fn item ->
+        case F122SessionPackets.create_f1_22_session_packet(item) do
+          {:ok, _} -> :ok
+          {:error, reason} -> Logger.warning("store_f1_22_session_packets: reason=#{inspect reason}")
+        end
+      end)
+    end)
+    %{state|f1_22_packets_session: []}
+  end
 
   @doc false
   def store_f1_22_lap_data_packets(state) do
