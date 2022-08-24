@@ -7,8 +7,12 @@
   <div class="column">
     <ul>
       <%= for item <- @data.sessions do %>
-        <li><%= item.inserted_at %>: <%= link "#{item.m_sessionUID}",
-          to: Routes.page_path(@conn, :show_lap_data, item.m_sessionUID, item.m_playerCarIndex, 1) %></li>
+        <li>
+          <h4><%= item.track %> - <%= item.game_mode %> - <%= item.session_type %></h4>
+          <%= item.inserted_at %>: <%= link "Session Laps",
+            to: Routes.page_path(@conn, :show_lap_data, Decimal.to_integer(item.m_header.m_sessionUID), item.m_header.m_playerCarIndex, 1) %>
+
+        </li>
       <% end %>
     </ul>
   </div>

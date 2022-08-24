@@ -108,8 +108,8 @@ defmodule RacingTelemetry.F122.Models.F122SessionPackets do
      with {:ok, q} <- query_f1_22_session_packets(opts),
       {:ok, q} <- RT.Query.find_query_extra(q, opts),
       {:ok, q} <- query_f1_22_session_packets_preload_all(q, opts),
+      {:ok, q} <- query_f1_22_session_packets_order_by(q, opts),
       q = RT.Query.find_query_m_header_preload_defaults(q),
-      q = RT.Query.find_query_m_header_order_by(q),
       items = RT.Repo.all(q),
       do: {:ok, items}
   end
@@ -131,6 +131,37 @@ defmodule RacingTelemetry.F122.Models.F122SessionPackets do
       {:ok, false} -> {:ok, q}
       {:ok, _val} -> {:error, %{preload_all: ["is invalid"]}}
       :error -> {:ok, q}
+    end
+  end
+
+  defp query_f1_22_session_packets_order_by(q, opts) do
+    case Keyword.fetch(opts, :order_by) do
+      {:ok, :m_sessionUID} ->
+        q =
+          RT.Query.ensure_join(q, :inner, :m_header)
+          |> Ecto.Query.order_by([i], [
+            {:asc, as(:m_header).m_sessionUID},
+            {:asc, as(:m_header).m_frameIdentifier},
+            {:asc, as(:m_header).m_sessionTime},
+            {:asc, i.serial_number},
+          ])
+        {:ok, q}
+
+      {:ok, :m_frameIdentifier} ->
+        q =
+          RT.Query.ensure_join(q, :inner, :m_header)
+          |> Ecto.Query.order_by([i], [
+            {:asc, as(:m_header).m_frameIdentifier},
+            {:asc, as(:m_header).m_sessionTime},
+            {:asc, i.serial_number},
+          ])
+        {:ok, q}
+
+      {:ok, _val} ->
+        {:error, %{order_by: ["is invalid"]}}
+
+      :error ->
+        {:ok, Ecto.Query.order_by(q, [i], [{:asc, i.serial_number}])}
     end
   end
 
@@ -182,6 +213,26 @@ defmodule RacingTelemetry.F122.Models.F122SessionPackets do
   """
   def delete_f1_22_session_packet(%F122SessionPacket{} = f1_22_session_packet) do
     RT.Repo.delete(f1_22_session_packet)
+  end
+
+  @doc """
+  Returns a list of the final f1_22_session_packets for each unique m_sessionUID.
+
+  """
+  def fetch_unique_f1_22_session_packets_by_m_sessionUID(opts \\ []) do
+    # find list of f1_22_session_packet ids for the final packets for each session
+    f1_22_session_packet_ids =
+      Ecto.Query.from(i in F122SessionPacket)
+      |> RT.Query.ensure_join(:inner, :m_header)
+      |> Ecto.Query.distinct([as(:m_header).m_sessionUID])
+      |> Ecto.Query.order_by([i], [asc: i.inserted_at])
+      |> Ecto.Query.select([i], [i.id])
+      |> RT.Repo.all()
+      |> Enum.map(fn [id] -> id end)
+
+    # find each of the unique IDs
+    Keyword.put(opts, :ids, f1_22_session_packet_ids)
+    |> fetch_f1_22_session_packets()
   end
 
 end

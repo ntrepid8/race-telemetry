@@ -19,6 +19,36 @@ defmodule RacingTelemetry.QueryOptions do
   end
 
   @doc false
+  def find_query_ids(query, opts) do
+    with {:ok, vals} <- Keyword.fetch(opts, :ids),
+      :ok <- validate_ids(vals)
+    do
+      {:ok, Ecto.Query.where(query, [i], i.id in ^vals)}
+    else
+      :error -> {:ok, query}
+      error -> error
+    end
+  end
+
+  @doc false
+  def validate_ids(vals) when is_list(vals) do
+    Enum.with_index(vals)
+    |> validate_ids_reduce()
+  end
+  def validate_ids(_) do
+    {:error, %{ids: ["must be a list of UUIDs"]}}
+  end
+
+  @doc false
+  def validate_ids_reduce([]), do: :ok
+  def validate_ids_reduce([{item, index}|items]) do
+    case UUID.info(item) do
+      {:ok, _} -> validate_ids_reduce(items)
+      _error -> {:error, %{ids: ["item #{index} is invalid UUID"]}}
+    end
+  end
+
+  @doc false
   def validate_uuid(field_name, val) do
     case UUID.info(val) do
       {:ok, _} -> {:ok, val}

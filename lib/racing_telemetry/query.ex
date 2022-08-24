@@ -51,9 +51,9 @@ defmodule RacingTelemetry.Query do
       # Success
       [item] -> {:ok, item}
       # This should never happen outside of a developer error.
-      [_h|_t] -> {:error, Map.put(%{}, key, ["multiple found"])}
+      [_h|_t] -> {:error, %{multiple_found: ["#{key}: multiple found"]}}
       # Error, item not found
-      _ -> {:error, Map.put(%{}, key, ["not found"])}
+      _ -> {:error, %{not_found: ["#{key}: not found"]}}
     end
   end
 
@@ -65,6 +65,7 @@ defmodule RacingTelemetry.Query do
   """
   def find_query_base(query, opts) do
     with {:ok, query} <- RTQO.find_query_id(query, opts),
+      {:ok, query} <- RTQO.find_query_ids(query, opts),
       {:ok, query} <- RTQO.find_query_deleted(query, opts),
       {:ok, query} <- RTQO.find_query_live_mode(query, opts),
       do: {:ok, query}

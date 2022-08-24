@@ -351,6 +351,34 @@ defmodule RacingTelemetry.F122.Models.F122LapDataPackets do
 
   """
   def fetch_f1_22_lap_data_packet_car_lap_first_and_last(m_sessionUID, car_index, lap_number) do
+    # # first packet of lap
+    # first_opts = [
+    #   m_sessionUID: m_sessionUID,
+    #   car_index: car_index,
+    #   m_currentLapNum: lap_number,
+    #   limit: 1,
+    #   order_by: [{:m_frameIdentifier, :asc}, {:m_sessionTime, :desc}],
+    # ]
+    # # last packet of lap
+    # last_opts = [
+    #   m_sessionUID: m_sessionUID,
+    #   car_index: car_index,
+    #   m_currentLapNum: lap_number,
+    #   limit: 1,
+    #   order_by: [{:m_frameIdentifier, :desc}, {:m_sessionTime, :desc}],
+    # ]
+    # # lookup
+    # with {:ok, first_record} <- fetch_f1_22_lap_data_packet_car_lap_first(m_sessionUID, car_index, lap_number),
+    #   {:ok, last_record} <- fetch_one_f1_22_lap_data_packet_car(last_opts),
+    #   do: {:ok, %{first: first_record, last: last_record}}
+
+    with {:ok, first_record} <- fetch_f1_22_lap_data_packet_car_lap_first(m_sessionUID, car_index, lap_number),
+      {:ok, last_record} <- fetch_f1_22_lap_data_packet_car_lap_last(m_sessionUID, car_index, lap_number),
+      do: {:ok, %{first: first_record, last: last_record}}
+  end
+
+  @doc false
+  def fetch_f1_22_lap_data_packet_car_lap_first(m_sessionUID, car_index, lap_number) do
     # first packet of lap
     first_opts = [
       m_sessionUID: m_sessionUID,
@@ -359,6 +387,14 @@ defmodule RacingTelemetry.F122.Models.F122LapDataPackets do
       limit: 1,
       order_by: [{:m_frameIdentifier, :asc}, {:m_sessionTime, :desc}],
     ]
+    case fetch_one_f1_22_lap_data_packet_car(first_opts) do
+      {:ok, item} -> {:ok, item}
+      {:error, %{not_found: _}} -> {:error, %{not_found: ["f1_22_lap_data_packet_car: first not found"]}}
+    end
+  end
+
+  @doc false
+  def fetch_f1_22_lap_data_packet_car_lap_last(m_sessionUID, car_index, lap_number) do
     # last packet of lap
     last_opts = [
       m_sessionUID: m_sessionUID,
@@ -367,10 +403,10 @@ defmodule RacingTelemetry.F122.Models.F122LapDataPackets do
       limit: 1,
       order_by: [{:m_frameIdentifier, :desc}, {:m_sessionTime, :desc}],
     ]
-    # lookup
-    with {:ok, first_record} <- fetch_one_f1_22_lap_data_packet_car(first_opts),
-      {:ok, last_record} <- fetch_one_f1_22_lap_data_packet_car(last_opts),
-      do: {:ok, %{first: first_record, last: last_record}}
+    case fetch_one_f1_22_lap_data_packet_car(last_opts) do
+      {:ok, item} -> {:ok, item}
+      {:error, %{not_found: _}} -> {:error, %{not_found: ["f1_22_lap_data_packet_car: last not found"]}}
+    end
   end
 
   @doc """

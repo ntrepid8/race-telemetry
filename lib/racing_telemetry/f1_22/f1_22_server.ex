@@ -5,6 +5,7 @@ defmodule RacingTelemetry.F122Server do
   """
   use GenServer, restart: :temporary
   require Logger
+  alias RacingTelemetry, as: RT
   alias RacingTelemetry.F122.Models.{
     F122CarTelemetryPackets,
     F122LapDataPackets,
@@ -213,7 +214,7 @@ defmodule RacingTelemetry.F122Server do
       Enum.each(items, fn item ->
         case F122SessionPackets.create_f1_22_session_packet(item) do
           {:ok, _} -> :ok
-          {:error, reason} -> Logger.warning("store_f1_22_session_packets: reason=#{inspect reason}")
+          {:error, reason} -> log_store_packet_error("store_f1_22_session_packets", reason)
         end
       end)
     end)
@@ -227,7 +228,7 @@ defmodule RacingTelemetry.F122Server do
       Enum.each(items, fn item ->
         case F122LapDataPackets.create_f1_22_lap_data_packet(item) do
           {:ok, _} -> :ok
-          {:error, reason} -> Logger.warning("store_f1_22_lap_data_packets: reason=#{inspect reason}")
+          {:error, reason} -> log_store_packet_error("store_f1_22_lap_data_packets", reason)
         end
       end)
     end)
@@ -241,11 +242,20 @@ defmodule RacingTelemetry.F122Server do
       Enum.each(items, fn item ->
         case F122CarTelemetryPackets.create_f1_22_car_telemetry_packet(item) do
           {:ok, _} -> :ok
-          {:error, reason} -> Logger.warning("store_f1_22_lap_telemetry_packets: reason=#{inspect reason}")
+          {:error, reason} -> log_store_packet_error("store_f1_22_lap_telemetry_packets", reason)
         end
       end)
     end)
     %{state|f1_22_packets_car_telemetry: []}
+  end
+
+  @doc false
+  def log_store_packet_error(key, %Ecto.Changeset{} = reason) do
+    errors = RT.Changeset.format_changeset_errors(reason)
+    Logger.error("#{key}: reason=#{inspect errors}")
+  end
+  def log_store_packet_error(key, reason) do
+    Logger.error("#{key}: reason=#{inspect reason}")
   end
 
   @doc false

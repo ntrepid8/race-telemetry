@@ -1,22 +1,98 @@
 <div class="row">
   <div class="column">
-    <h2>Racing Telemetry: F1 22 Lap Data</h2>
-    <ul>
-      <li>session: <%= @data.m_sessionUID %></li>
-      <li>car_index: <%= @data.car_index %></li>
-      <li>lap_number: <%= @data.lap_number %></li>
-    </ul>
+    <h2>F1 '22: Lap Data</h2>
+  </div>
+</div>
+
+
+
+<div class="row">
+  <div class="column">
+    <div class="row">
+      <div class="column">
+        <h3>Session</h3>
+        <ul>
+          <li><strong>Date:</strong> <%= @data.session.inserted_at %></li>
+          <li><strong>Formula:</strong> <%= @data.session.formula %></li>
+          <li><strong>Type:</strong> <%= @data.session.session_type %></li>
+          <li><strong>Game Mode:</strong> <%= @data.session.game_mode %></li>
+          <li><strong>Ruleset:</strong> <%= @data.session.ruleset %></li>
+          <li><strong>AI Difficulty:</strong> <%= @data.session.m_aiDifficulty %></li>
+        </ul>
+      </div>
+      <div class="column">
+        <h3>Assists</h3>
+        <ul>
+          <li><strong>Steering:</strong> <%= @data.session.m_steeringAssist %></li>
+          <li><strong>Braking:</strong> <%= @data.session.m_brakingAssist %></li>
+          <li><strong>Gearbox:</strong> <%= @data.session.m_gearboxAssist %></li>
+          <li><strong>Pit:</strong> <%= @data.session.m_pitAssist %></li>
+          <li><strong>Pit Release:</strong> <%= @data.session.m_pitReleaseAssist %></li>
+        </ul>
+      </div>
+      <div class="column">
+        <h3>Track</h3>
+        <ul>
+          <li><strong>Name:</strong> <%= @data.session.track %></li>
+          <li><strong>Length:</strong> <%= @data.session.m_trackLength %> meters</li>
+        </ul>
+      </div>
+    </div>
+    <div class="row">
+
+      <div class="column">
+        <h3>Conditions</h3>
+        <ul>
+          <li><strong>Track:</strong> <%= @data.session.m_trackTemperature %> °C</li>
+          <li><strong>Air:</strong> <%= @data.session.m_airTemperature %> °C</li>
+        </ul>
+      </div>
+      <div class="column">
+        <h3>Lap</h3>
+        <ul>
+          <li><strong>Number:</strong> <%= @data.lap_number %> of <%= @data.session.m_totalLaps %></li>
+          <li><strong>Car Index:</strong> <%= @data.car_index %></li>
+          <li><strong>Player Car Index:</strong> <%= @data.session.m_header.m_playerCarIndex %></li>
+        </ul>
+      </div>
+      <div class="column">
+        <h3>Timing</h3>
+        <ul>
+          <li><strong>Sector 1:</strong></li>
+          <li><strong>Sector 2:</strong></li>
+          <li><strong>Sector 3:</strong></li>
+          <li><strong>Lap:</strong></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="column">
+    <img src=<%= Routes.static_path(@conn, get_f1_22_circuit_map_path(@data.session.m_trackId)) %>/>
   </div>
 </div>
 
 <div class="row">
   <div class="column">
-    Next: <%= link "Lap #{@data.lap_number+1}",
-      to: Routes.page_path(@conn, :show_lap_data, @data.m_sessionUID, @data.car_index, (@data.lap_number+1)) %>
+    <p>Laps:
+      <%= for lap_number <- 1..@data.session.m_totalLaps do %>
+        <%= if lap_number == @data.lap_number do %>
+          <strong>
+            <%= link "#{lap_number}", to: Routes.page_path(@conn, :show_lap_data, @data.m_sessionUID, @data.car_index, lap_number) %>
+          </strong>
+        <% else %>
+          <%= link "#{lap_number}", to: Routes.page_path(@conn, :show_lap_data, @data.m_sessionUID, @data.car_index, lap_number) %>
+        <% end %>
+      <% end %>
+    </p>
+  </div>
+  <div class="column justify-right">
+    <strong>
+      <%= link "Next Lap >", to: Routes.page_path(@conn, :show_lap_data, @data.m_sessionUID, @data.car_index, (@data.lap_number+1)) %>
+    </strong>
   </div>
 </div>
 
-<div class="row row-wide">
+<div class="row">
   <div class="column">
     <div class="speed-chart-container">
       <canvas id="f1_22_lap_speed_plot"></canvas>
@@ -24,7 +100,7 @@
   </div>
 </div>
 
-<div class="row row-wide">
+<div class="row">
   <div class="column">
     <div class="gear-chart-container">
       <canvas id="f1_22_lap_gear_plot"></canvas>
@@ -32,7 +108,7 @@
   </div>
 </div>
 
-<div class="row row-wide">
+<div class="row">
   <div class="column">
     <div class="steer-chart-container">
       <canvas id="f1_22_lap_steer_plot"></canvas>
@@ -40,7 +116,7 @@
   </div>
 </div>
 
-<div class="row row-wide">
+<div class="row">
   <div class="column">
     <div class="throttle-chart-container">
       <canvas id="f1_22_lap_throttle_plot"></canvas>
@@ -48,7 +124,7 @@
   </div>
 </div>
 
-<div class="row row-wide">
+<div class="row">
   <div class="column">
     <div class="brake-chart-container">
       <canvas id="f1_22_lap_brake_plot"></canvas>
@@ -56,7 +132,7 @@
   </div>
 </div>
 
-<div class="row row-wide">
+<div class="row">
   <div class="column">
     <div class="drs-chart-container">
       <canvas id="f1_22_lap_drs_plot"></canvas>
