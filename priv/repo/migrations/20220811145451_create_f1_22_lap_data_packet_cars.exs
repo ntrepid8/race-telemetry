@@ -12,6 +12,11 @@ defmodule RacingTelemetry.Repo.Migrations.CreateF122LapDataPacketCars do
       add :live_mode, :boolean, default: true, null: false
       timestamps()
 
+      # header fields (for indexing)
+      add :m_sessionUID, :numeric, precision: 20, scale: 0  # uint64
+      add :m_sessionTime, :float
+      add :m_frameIdentifier, :bigint
+
       # model fields
       add :m_lastLapTimeInMS, :bigint
       add :m_currentLapTimeInMS, :bigint
@@ -60,6 +65,13 @@ defmodule RacingTelemetry.Repo.Migrations.CreateF122LapDataPacketCars do
     create index(:f1_22_lap_data_packet_cars, [:car_index])
     create index(:f1_22_lap_data_packet_cars, [:m_lapDistance])
     create index(:f1_22_lap_data_packet_cars, [:m_totalDistance])
+    create index(:f1_22_lap_data_packet_cars, [:m_currentLapNum])
+    create index(:f1_22_lap_data_packet_cars, [:car_index, :m_currentLapNum])
+
+    # header indexes
+    create index(:f1_22_lap_data_packet_cars, [:m_sessionUID])
+    create index(:f1_22_lap_data_packet_cars, [:m_sessionTime])
+    create index(:f1_22_lap_data_packet_cars, [:m_frameIdentifier])
 
   end
 

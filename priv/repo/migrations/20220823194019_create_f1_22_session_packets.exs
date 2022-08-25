@@ -12,6 +12,11 @@ defmodule RacingTelemetry.Repo.Migrations.CreateF122SessionPackets do
       add :live_mode, :boolean, default: true, null: false
       timestamps()
 
+      # header fields (for indexing)
+      add :m_sessionUID, :numeric, precision: 20, scale: 0  # uint64
+      add :m_sessionTime, :float
+      add :m_frameIdentifier, :bigint
+
       # original fields
       add :m_weather, :integer
       add :m_trackTemperature, :integer
@@ -76,6 +81,11 @@ defmodule RacingTelemetry.Repo.Migrations.CreateF122SessionPackets do
     create index(:f1_22_session_packets, [:inserted_at])
     create index(:f1_22_session_packets, [:updated_at])
     create index(:f1_22_session_packets, [:serial_number], unique: true)
+
+    # header indexes
+    create index(:f1_22_session_packets, [:m_sessionUID])
+    create index(:f1_22_session_packets, [:m_sessionTime])
+    create index(:f1_22_session_packets, [:m_frameIdentifier])
 
   end
 

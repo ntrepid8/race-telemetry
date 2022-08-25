@@ -21,6 +21,11 @@ defmodule RacingTelemetry.F122.Packets.F122PacketLapData do
     m_timeTrialRivalCarIdx: nil,  # uint8 - Index of Rival car in time trial (255 if invalid)
 
     # computed
+
+    # header fields (for indexing)
+    m_sessionUID: nil,
+    m_sessionTime: nil,
+    m_frameIdentifier: nil,
   ]
 
   def from_binary(%F122PacketHeader{packet_type: "lap_data"} = ph0, <<
@@ -28,21 +33,26 @@ defmodule RacingTelemetry.F122.Packets.F122PacketLapData do
     m_timeTrialPBCarIdx::unsigned-little-integer-size(8),
     m_timeTrialRivalCarIdx::unsigned-little-integer-size(8),
   >>) do
-    with {:ok, car_lap_data} <- fetch_car_lap_data(m_lapData) do
+    with {:ok, car_lap_data} <- fetch_car_lap_data(ph0, m_lapData) do
       {:ok, %__MODULE__{
         m_header: ph0,
         m_lapData: car_lap_data,
         m_timeTrialPBCarIdx: m_timeTrialPBCarIdx,
         m_timeTrialRivalCarIdx: m_timeTrialRivalCarIdx,
+
+        # header field (for indexing)
+        m_sessionUID: ph0.m_sessionUID,
+        m_sessionTime: ph0.m_sessionTime,
+        m_frameIdentifier: ph0.m_frameIdentifier,
       }}
     end
   end
 
   @doc false
-  def fetch_car_lap_data(<<m_lapData::binary-size(946)>>) do
+  def fetch_car_lap_data(ph0, <<m_lapData::binary-size(946)>>) do
     split_car_lap_data(m_lapData)
     |> Enum.with_index()
-    |> parse_car_lap_data_items()
+    |> parse_car_lap_data_items(ph0)
   end
 
   @doc false
@@ -53,11 +63,11 @@ defmodule RacingTelemetry.F122.Packets.F122PacketLapData do
   end
 
   @doc false
-  def parse_car_lap_data_items(items), do: parse_car_lap_data_items(items, [])
-  def parse_car_lap_data_items([], accum), do: {:ok, Enum.reverse(accum)}
-  def parse_car_lap_data_items([{<<item::binary-size(43)>>, index}|items], accum) do
-    case F122PacketLapDataCarLapData.from_binary(index, item) do
-      {:ok, result} -> parse_car_lap_data_items(items, [result|accum])
+  def parse_car_lap_data_items(items, ph0), do: parse_car_lap_data_items(items, ph0, [])
+  def parse_car_lap_data_items([], _ph0, accum), do: {:ok, Enum.reverse(accum)}
+  def parse_car_lap_data_items([{<<item::binary-size(43)>>, index}|items], ph0, accum) do
+    case F122PacketLapDataCarLapData.from_binary(ph0, index, item) do
+      {:ok, result} -> parse_car_lap_data_items(items, ph0, [result|accum])
       {:error, reason} -> {:error, reason}
     end
   end

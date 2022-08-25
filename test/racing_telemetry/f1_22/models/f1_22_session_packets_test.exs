@@ -71,6 +71,7 @@ defmodule RacingTelemetry.F122.Models.F122SessionPacketsTest do
         m_weekendLinkIdentifier: 2771601120,
       } = f1_22_session_packet
       assert Decimal.to_integer(m_sessionUID) == 15722004913203710600
+      assert Decimal.to_integer(f1_22_session_packet.m_sessionUID) == 15722004913203710600
       assert length(m_marshalZones) == 18
       assert length(m_weatherForecastSamples) == 38
     end
@@ -147,7 +148,7 @@ defmodule RacingTelemetry.F122.Models.F122SessionPacketsTest do
       assert {:ok, %F122SessionPacket{id: ^f1_22_session_packet_id}} =
         F122SessionPackets.delete_f1_22_session_packet(f1_22_session_packet)
 
-      assert {:error, %{f1_22_session_packet: ["not found"]}} =
+      assert {:error, %{not_found: ["f1_22_session_packet: not found"]}} =
         F122SessionPackets.fetch_f1_22_session_packet(
           f1_22_session_packet.id,
           [preload_all: true])

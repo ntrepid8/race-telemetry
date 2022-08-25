@@ -118,18 +118,15 @@ defmodule RacingTelemetry.F122.Models.F122LapDataPackets do
   def find_f1_22_lap_data_packets_query(opts \\ []) do
     q = Ecto.Query.from(n in F122LapDataPacket)
     with {:ok, q} <- RT.Query.find_query_base(q, opts),
-      {:ok, q} <- find_f1_22_lap_data_packets_query_m_sessionUID(q, opts),
+      {:ok, q} <- query_f1_22_lap_data_packets_m_sessionUID(q, opts),
       do: {:ok, q}
   end
 
   @doc false
-  def find_f1_22_lap_data_packets_query_m_sessionUID(q, opts) do
+  def query_f1_22_lap_data_packets_m_sessionUID(q, opts) do
     case Keyword.fetch(opts, :m_sessionUID) do
       {:ok, val} ->
-        q =
-          RT.Query.ensure_join(q, :inner, :m_header)
-          |> Ecto.Query.where(as(:m_header).m_sessionUID == ^val)
-        {:ok, q}
+        {:ok, Ecto.Query.where(q, [i], i.m_sessionUID == ^val)}
       _not_found ->
         {:ok, q}
     end
@@ -138,8 +135,7 @@ defmodule RacingTelemetry.F122.Models.F122LapDataPackets do
   @doc false
   def find_f1_22_lap_data_packets_query_order_by(q) do
     q
-    |> RT.Query.ensure_join(:inner, :m_header)
-    |> Ecto.Query.order_by([{:asc, as(:m_header).m_sessionTime}, {:asc, as(:m_header).m_frameIdentifier}])
+    |> Ecto.Query.order_by([i], [{:asc, i.m_sessionTime}, {:asc, i.m_frameIdentifier}])
   end
 
   @doc false
@@ -254,10 +250,7 @@ defmodule RacingTelemetry.F122.Models.F122LapDataPackets do
   def find_f1_22_lap_data_packets_cars_query_m_sessionUID(q, opts) do
     case Keyword.fetch(opts, :m_sessionUID) do
       {:ok, val} ->
-        q =
-          RT.Query.ensure_join(q, :inner, :m_header)
-          |> Ecto.Query.where(as(:m_header).m_sessionUID == ^val)
-        {:ok, q}
+        {:ok, Ecto.Query.where(q, [i], i.m_sessionUID == ^val)}
       _not_found ->
         {:ok, q}
     end
@@ -284,7 +277,6 @@ defmodule RacingTelemetry.F122.Models.F122LapDataPackets do
 
   @doc false
   def query_f1_22_lap_data_packet_cars_order_by(q, opts) do
-    q = RT.Query.ensure_join(q, :inner, :m_header)
     case Keyword.fetch(opts, :order_by) do
       {:ok, vals} when is_list(vals) -> {:ok, query_f1_22_lap_data_packet_cars_order_by_reduce(vals, q)}
       _not_found -> {:ok, query_f1_22_lap_data_packet_cars_order_by_default(q)}
@@ -292,24 +284,24 @@ defmodule RacingTelemetry.F122.Models.F122LapDataPackets do
   end
 
   defp query_f1_22_lap_data_packet_cars_order_by_default(q) do
-    Ecto.Query.order_by(q, [{:asc, as(:m_header).m_frameIdentifier}, {:desc, as(:m_header).m_sessionTime}])
+    Ecto.Query.order_by(q, [i], [{:asc, i.m_frameIdentifier}, {:desc, i.m_sessionTime}])
   end
 
   defp query_f1_22_lap_data_packet_cars_order_by_reduce([], q), do: q
   defp query_f1_22_lap_data_packet_cars_order_by_reduce([{:m_frameIdentifier, :asc}|items], q) do
-    q = Ecto.Query.order_by(q, [{:asc, as(:m_header).m_frameIdentifier}])
+    q = Ecto.Query.order_by(q, [i], [{:asc, i.m_frameIdentifier}])
     query_f1_22_lap_data_packet_cars_order_by_reduce(items, q)
   end
   defp query_f1_22_lap_data_packet_cars_order_by_reduce([{:m_frameIdentifier, :desc}|items], q) do
-    q = Ecto.Query.order_by(q, [{:desc, as(:m_header).m_frameIdentifier}])
+    q = Ecto.Query.order_by(q, [i], [{:desc, i.m_frameIdentifier}])
     query_f1_22_lap_data_packet_cars_order_by_reduce(items, q)
   end
   defp query_f1_22_lap_data_packet_cars_order_by_reduce([{:m_sessionTime, :asc}|items], q) do
-    q = Ecto.Query.order_by(q, [{:asc, as(:m_header).m_sessionTime}])
+    q = Ecto.Query.order_by(q, [i], [{:asc, i.m_sessionTime}])
     query_f1_22_lap_data_packet_cars_order_by_reduce(items, q)
   end
   defp query_f1_22_lap_data_packet_cars_order_by_reduce([{:m_sessionTime, :desc}|items], q) do
-    q = Ecto.Query.order_by(q, [{:desc, as(:m_header).m_sessionTime}])
+    q = Ecto.Query.order_by(q, [i], [{:desc, i.m_sessionTime}])
     query_f1_22_lap_data_packet_cars_order_by_reduce(items, q)
   end
   defp query_f1_22_lap_data_packet_cars_order_by_reduce([_item|items], q) do
@@ -342,7 +334,7 @@ defmodule RacingTelemetry.F122.Models.F122LapDataPackets do
 
   @doc false
   def dedup_f1_22_lap_data_packet_car_frames(items) do
-    Enum.dedup_by(items, fn i -> i.m_header.m_frameIdentifier end)
+    Enum.dedup_by(items, fn i -> i.m_frameIdentifier end)
   end
 
 
@@ -424,7 +416,7 @@ defmodule RacingTelemetry.F122.Models.F122LapDataPackets do
     find_f1_22_lap_data_packet_cars(opts)
     |> filter_linear_distance()
     |> Enum.sort_by(fn i ->
-      {i.m_totalDistance, i.m_currentLapNum, i.m_header.m_frameIdentifier, i.m_header.m_sessionTime, i.serial_number}
+      {i.m_totalDistance, i.m_currentLapNum, i.m_frameIdentifier, i.m_sessionTime, i.serial_number}
     end)
   end
 
@@ -433,7 +425,7 @@ defmodule RacingTelemetry.F122.Models.F122LapDataPackets do
     # require m_totalDistance to move in one direction
     items =
       Enum.sort_by(items, fn i ->
-        {i.m_totalDistance, i.m_currentLapNum, i.m_header.m_frameIdentifier, i.m_header.m_sessionTime}
+        {i.m_totalDistance, i.m_currentLapNum, i.m_frameIdentifier, i.m_sessionTime}
       end)
       |> Enum.reverse()
 
@@ -449,8 +441,8 @@ defmodule RacingTelemetry.F122.Models.F122LapDataPackets do
     conditions = [
       (item.m_totalDistance <= cursor.m_totalDistance),
       (item.m_currentLapNum <= cursor.m_currentLapNum),
-      (item.m_header.m_frameIdentifier <= cursor.m_header.m_frameIdentifier),
-      (item.m_header.m_sessionTime <= cursor.m_header.m_sessionTime),
+      (item.m_frameIdentifier <= cursor.m_frameIdentifier),
+      (item.m_sessionTime <= cursor.m_sessionTime),
     ]
     case Enum.all?(conditions) do
       # next distance is linear

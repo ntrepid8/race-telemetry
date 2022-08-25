@@ -39,6 +39,7 @@ defmodule RacingTelemetry.Repo.Migrations.CreateF122PacketHeaders do
     create index(:f1_22_packet_headers, [:m_sessionTime])
     create index(:f1_22_packet_headers, [:m_frameIdentifier])
     create index(:f1_22_packet_headers, [:packet_type])
+    create index(:f1_22_packet_headers, [:m_frameIdentifier, :m_sessionTime])
   end
 
 end

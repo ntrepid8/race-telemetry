@@ -197,6 +197,11 @@ defmodule RacingTelemetry.F122.Packets.F122PacketSession do
     dynamic_racing_line: nil,
     ruleset: nil,
     session_length: nil,
+
+    # header fields (for indexing)
+    m_sessionUID: nil,
+    m_sessionTime: nil,
+    m_frameIdentifier: nil,
   ]
 
   def from_binary(%F122PacketHeader{packet_type: "session"} = ph0, <<
@@ -301,6 +306,11 @@ defmodule RacingTelemetry.F122.Packets.F122PacketSession do
         game_mode: Map.get(@game_mode_ids, m_gameMode),
         ruleset: Map.get(@ruleset_ids, m_ruleSet),
         session_length: Map.get(@session_length_ids, m_sessionLength),
+
+        # header field (for indexing)
+        m_sessionUID: ph0.m_sessionUID,
+        m_sessionTime: ph0.m_sessionTime,
+        m_frameIdentifier: ph0.m_frameIdentifier,
       }}
     end
   end

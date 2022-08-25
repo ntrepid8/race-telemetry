@@ -7,6 +7,10 @@ defmodule RacingTelemetry.F122.Packets.F122PacketCarTelemetryCar do
   Size: 480 bits / 60 bytes
   """
   require Logger
+  alias RacingTelemetry.F122.Packets.{
+    F122PacketHeader,
+  }
+
   defstruct [
     m_speed: nil,                    # uint16 - Speed of car in kilometres per hour
     m_throttle: nil,                 # float32 - Amount of throttle applied (0.0 to 1.0)
@@ -28,6 +32,11 @@ defmodule RacingTelemetry.F122.Packets.F122PacketCarTelemetryCar do
     # computed
     car_index: nil,
     surface_type: nil,               # RL, RR, FL, FR
+
+    # header fields (for indexing)
+    m_sessionUID: nil,
+    m_sessionTime: nil,
+    m_frameIdentifier: nil,
   ]
 
   @driving_surface_type %{
@@ -45,7 +54,7 @@ defmodule RacingTelemetry.F122.Packets.F122PacketCarTelemetryCar do
     11 => "Ridged",
   }
 
-  def from_binary(car_index, <<
+  def from_binary(%F122PacketHeader{packet_type: "car_telemetry"} = ph0, car_index, <<
     m_speed::unsigned-little-integer-size(16),
     m_throttle::little-float-size(32),
     m_steer::little-float-size(32),
@@ -141,9 +150,14 @@ defmodule RacingTelemetry.F122.Packets.F122PacketCarTelemetryCar do
         Map.get(@driving_surface_type, m_surfaceType_fl, "Unknown"),
         Map.get(@driving_surface_type, m_surfaceType_fr, "Unknown"),
       ],
+
+      # header field (for indexing)
+      m_sessionUID: ph0.m_sessionUID,
+      m_sessionTime: ph0.m_sessionTime,
+      m_frameIdentifier: ph0.m_frameIdentifier,
     }}
   end
-  def from_binary(car_index, data) do
+  def from_binary(ph0, car_index, data) do
     Logger.error("car_index=#{car_index} data_byte_size=#{byte_size(data)} data=#{inspect data}")
     {:error, %{packet_car_telemetry_car: ["is invalid"]}}
   end

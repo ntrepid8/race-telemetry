@@ -4,8 +4,14 @@ defmodule RacingTelemetry.F122.Models.F122LapDataPackets.F122LapDataPacket do
 
   # fields that must always be present
   @required_fields [
+    # original
     :m_timeTrialPBCarIdx,
     :m_timeTrialRivalCarIdx,
+
+    # header fields (for indexing)
+    :m_sessionUID,
+    :m_sessionTime,
+    :m_frameIdentifier,
   ]
 
   # fields used by the system which are present on all record types
@@ -29,6 +35,11 @@ defmodule RacingTelemetry.F122.Models.F122LapDataPackets.F122LapDataPacket do
   @derive {Jason.Encoder, except: @exclude_from_json_fields}
   schema "f1_22_lap_data_packets" do
     field :object, :string, virtual: true, default: "f1_22_lap_data_packet"
+
+    # header fields (for indexing)
+    field :m_sessionUID, :decimal       # uint64  - Unique identifier for the session
+    field :m_sessionTime, :float        # float32 - Session timestamp (seconds since the session started)
+    field :m_frameIdentifier, :integer  # uint32  - Identifier for the frame the data was retrieved on
 
     # original fields
     field :m_timeTrialPBCarIdx, :integer     # uint8 - Index of Personal Best car in time trial (255 if invalid)

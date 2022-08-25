@@ -123,7 +123,7 @@ defmodule RacingTelemetry.F122.Models.F122PacketHeadersTest do
       assert {:ok, %F122PacketHeader{id: ^f1_22_packet_header_id}} =
         F122PacketHeaders.delete_f1_22_packet_header(f1_22_packet_header)
 
-      assert {:error, %{f1_22_packet_header: ["not found"]}} =
+      assert {:error, %{not_found: ["f1_22_packet_header: not found"]}} =
         F122PacketHeaders.fetch_f1_22_packet_header(f1_22_packet_header.id)
     end
 

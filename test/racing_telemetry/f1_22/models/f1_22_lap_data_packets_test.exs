@@ -38,9 +38,12 @@ defmodule RacingTelemetry.F122.Models.F122LapDataPacketsTest do
         m_timeTrialRivalCarIdx: 255,
       } = f1_22_lap_data_packet
       assert Decimal.to_integer(m_sessionUID) == 15722004913203710600
+      assert Decimal.to_integer(f1_22_lap_data_packet.m_sessionUID) == 15722004913203710600
       assert is_list(m_lapData)
       assert length(m_lapData) == 22
       Logger.warn("m_lapData[0]=#{inspect Enum.at(m_lapData, 0), pretty: true}")
+
+      assert f1_22_lap_data_packet_car_0 = Enum.at(m_lapData, 0)
       assert %F122LapDataPacketCar{
         object: "f1_22_lap_data_packet_car",
         m_lastLapTimeInMS: 0,
@@ -81,7 +84,8 @@ defmodule RacingTelemetry.F122.Models.F122LapDataPacketsTest do
         sector: 1,
         serial_number: _,
         updated_at: %DateTime{},
-      } = Enum.at(m_lapData, 0)
+      } = f1_22_lap_data_packet_car_0
+      assert Decimal.to_integer(f1_22_lap_data_packet_car_0.m_sessionUID) == 15722004913203710600
     end
 
     test "create_f1_22_lap_data_packet_car/2 - success w/max m_lastLapTimeInMS" do

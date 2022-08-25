@@ -25,7 +25,11 @@ defmodule RacingTelemetry.F122.Models.F122CarTelemetryPackets.F122CarTelemetryPa
 
     # extrafields
     :car_index,
-    :surface_type,
+
+    # header fields (for indexing)
+    :m_sessionUID,
+    :m_sessionTime,
+    :m_frameIdentifier,
   ]
 
   # fields used by the system which are present on all record types
@@ -36,6 +40,9 @@ defmodule RacingTelemetry.F122.Models.F122CarTelemetryPackets.F122CarTelemetryPa
 
   # fields that are permitted to change on "update" operations
   @permitted_fields [
+    # extrafields
+    :surface_type,
+
     # associations
     :f1_22_car_telemetry_packet_id,
   ] ++ @system_fields ++ @required_fields
@@ -50,6 +57,11 @@ defmodule RacingTelemetry.F122.Models.F122CarTelemetryPackets.F122CarTelemetryPa
   @derive {Jason.Encoder, except: @exclude_from_json_fields}
   schema "f1_22_car_telemetry_packet_cars" do
     field :object, :string, virtual: true, default: "f1_22_car_telemetry_packet_car"
+
+    # header fields (for indexing)
+    field :m_sessionUID, :decimal       # uint64  - Unique identifier for the session
+    field :m_sessionTime, :float        # float32 - Session timestamp (seconds since the session started)
+    field :m_frameIdentifier, :integer  # uint32  - Identifier for the frame the data was retrieved on
 
     # original fields
     field :m_speed, :integer                              # uint16 - Speed of car in kilometres per hour

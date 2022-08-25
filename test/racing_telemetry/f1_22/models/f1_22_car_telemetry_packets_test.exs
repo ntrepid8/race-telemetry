@@ -42,9 +42,11 @@ defmodule RacingTelemetry.F122.Models.F122CarTelemetryPacketsTest do
         mfd_panel_secondary_player: "Closed",
       } = f1_22_car_telemetry_packet
       assert Decimal.to_integer(m_sessionUID) == 15722004913203710600
+      assert Decimal.to_integer(f1_22_car_telemetry_packet.m_sessionUID) == 15722004913203710600
       assert is_list(m_carTelemetryData)
       assert length(m_carTelemetryData) == 22
 
+      f1_22_car_telemetry_packet_car_21 = Enum.at(m_carTelemetryData, 21)
       assert %F122CarTelemetryPacketCar{
         f1_22_car_telemetry_packet_id: ^f1_22_lap_data_packet_id,
         m_brake: 0.0,
@@ -67,7 +69,8 @@ defmodule RacingTelemetry.F122.Models.F122CarTelemetryPacketsTest do
         # computed
         car_index: 21,
         surface_type: ["Tarmac", "Tarmac", "Tarmac", "Tarmac"],
-      } = Enum.at(m_carTelemetryData, 21)
+      } = f1_22_car_telemetry_packet_car_21
+      assert Decimal.to_integer(f1_22_car_telemetry_packet_car_21.m_sessionUID) == 15722004913203710600
     end
 
     test "update_f1_22_car_telemetry_packet/2 - success" do

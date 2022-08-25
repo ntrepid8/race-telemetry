@@ -8,6 +8,9 @@ defmodule RacingTelemetry.F122.Packets.F122PacketLapDataCarLapData do
 
   """
   require Logger
+  alias RacingTelemetry.F122.Packets.{
+    F122PacketHeader,
+  }
 
   defstruct [
     m_lastLapTimeInMS: nil,              # uint32 - Last lap time in milliseconds
@@ -46,9 +49,14 @@ defmodule RacingTelemetry.F122.Packets.F122PacketLapDataCarLapData do
     driver_status: nil,
     result_status: nil,
     pit_lane_timer_active: nil,
+
+    # header fields (for indexing)
+    m_sessionUID: nil,
+    m_sessionTime: nil,
+    m_frameIdentifier: nil,
   ]
 
-  def from_binary(car_index, <<
+  def from_binary(%F122PacketHeader{packet_type: "lap_data"} = ph0, car_index, <<
     m_lastLapTimeInMS::unsigned-little-integer-size(32),
     m_currentLapTimeInMS::unsigned-little-integer-size(32),
     m_sector1TimeInMS::unsigned-little-integer-size(16),
@@ -109,6 +117,11 @@ defmodule RacingTelemetry.F122.Packets.F122PacketLapDataCarLapData do
       driver_status: get_driver_status(m_driverStatus),
       result_status: get_result_status(m_resultStatus),
       pit_lane_timer_active: get_pit_lane_timer_active(m_pitLaneTimerActive),
+
+      # header field (for indexing)
+      m_sessionUID: ph0.m_sessionUID,
+      m_sessionTime: ph0.m_sessionTime,
+      m_frameIdentifier: ph0.m_frameIdentifier,
     }}
   end
   def from_binary(car_index, data) do
