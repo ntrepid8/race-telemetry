@@ -15,6 +15,9 @@ defmodule RacingTelemetry.F122.PacketsTest do
     F122PacketSession,
     F122PacketSessionMarshalZone,
     F122PacketSessionWeatherForecast,
+    F122PacketSessionHistory,
+    F122PacketSessionHistoryLap,
+    F122PacketSessionHistoryTyre,
   }
 
 
@@ -332,8 +335,74 @@ defmodule RacingTelemetry.F122.PacketsTest do
     end
 
     test "session_history" do
-      data = read_fixture!("racing-telemetry-packet-sample.session_history.dat")
-      assert byte_size(data) == 1155
+      # load session (required for parsing session_history)
+      session_dat = read_fixture!("racing-telemetry-packet-sample.session.dat")
+      assert {:ok, %F122PacketSession{} = ps0} = RT.F122.Packets.from_binary(session_dat)
+      assert !is_nil(ps0.m_formula)
+      assert ps0.m_formula == 0
+
+      # load session history
+      session_history_dat = read_fixture!("racing-telemetry-packet-sample.session_history.dat")
+      assert byte_size(session_history_dat) == 1155
+
+      opts = [packet_session: ps0]
+      assert {:ok, %F122PacketSessionHistory{} = ps0} = RT.F122.Packets.from_binary(session_history_dat, opts)
+      assert %F122PacketSessionHistory{
+        m_header: %F122PacketHeader{
+          m_packetFormat: 2022,
+          m_gameMajorVersion: 1,
+          m_gameMinorVersion: 6,
+          m_packetVersion: 1,
+          m_packetId: 11,
+          m_sessionUID: 15722004913203710600,
+          m_frameIdentifier: 23,
+          m_playerCarIndex: 21,
+          m_secondaryPlayerCarIndex: 255,
+        },
+        car_index: 0,
+        formula: "F1 Modern",
+        m_bestLapTimeLapNum: 0,
+        m_bestSector1LapNum: 0,
+        m_bestSector2LapNum: 0,
+        m_bestSector3LapNum: 0,
+        m_carIdx: 0,
+        m_formula: 0,
+        m_frameIdentifier: 23,
+        m_lapHistoryData: m_lapHistoryData,
+        m_numLaps: 1,
+        m_numTyreStints: 1,
+        m_sessionTime: 1.2550784349441528,
+        m_sessionUID: 15722004913203710600,
+        m_tyreStintsHistoryData:  m_tyreStintsHistoryData,
+      } = ps0
+      assert length(m_lapHistoryData) == 1
+      assert %F122PacketSessionHistoryLap{
+        lap_valid: true,
+        m_frameIdentifier: 23,
+        m_lapTimeInMS: 0,
+        m_lapValidBitFlags: 15,
+        m_sector1TimeInMS: 0,
+        m_sector2TimeInMS: 0,
+        m_sector3TimeInMS: 0,
+        m_sessionTime: 1.2550784349441528,
+        m_sessionUID: 15722004913203710600,
+        sector1_valid: true,
+        sector2_valid: true,
+        sector3_valid: true,
+      } = Enum.at(m_lapHistoryData, 0)
+      assert length(m_tyreStintsHistoryData) == 1
+      assert %F122PacketSessionHistoryTyre{
+        formula: "F1 Modern",
+        m_endLap: 255,
+        m_formula: 0,
+        m_frameIdentifier: 23,
+        m_sessionTime: 1.2550784349441528,
+        m_sessionUID: 15722004913203710600,
+        m_tyreActualCompound: 19,
+        m_tyreVisualCompound: 18,
+        tyre_actual_compound: "C2",
+        tyre_visual_compound: "hard",
+      } = Enum.at(m_tyreStintsHistoryData, 0)
     end
 
   end

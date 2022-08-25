@@ -66,7 +66,7 @@ defmodule RacingTelemetry.F122.Packets.F122PacketEventDetailButtonStatus do
   def get_button_flags(m_buttonStatus) do
     Map.to_list(@button_flags)
     |> Enum.reduce([], fn {key, val}, accum ->
-      case band(m_buttonStatus, key) == 1 do
+      case band(m_buttonStatus, key) > 0 do
         true -> [val|accum]
         false -> accum
       end

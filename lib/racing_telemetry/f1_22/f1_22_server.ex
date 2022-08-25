@@ -21,6 +21,7 @@ defmodule RacingTelemetry.F122Server do
     F122PacketEventData,
     F122PacketCarTelemetry,
     F122PacketSession,
+    F122PacketSessionHistory,
   }
 
   defstruct [
@@ -32,9 +33,14 @@ defmodule RacingTelemetry.F122Server do
     udp_clients: nil,
     listen_socket: nil,
     packet_type_samples: [],
+
+    # buffers for data collection
     f1_22_packets_lap_data: [],
     f1_22_packets_car_telemetry: [],
     f1_22_packets_session: [],
+
+    # most recent session packet
+    current_f1_22_packet_session: nil,
 
     # GenServer stuff
     hibernate_timeout: 15_000,  # hibernate after 15 seconds of inactivity
@@ -119,7 +125,7 @@ defmodule RacingTelemetry.F122Server do
 
     # parse the packet
     state =
-      case RacingTelemetry.F122.Packets.from_binary(data) do
+      case RacingTelemetry.F122.Packets.from_binary(data, [packet_session: state.current_f1_22_packet_session]) do
         # motion
         {:ok, %F122PacketMotionData{} = motion_data} ->
           run_broadcast("player_car_motion_gForce", motion_data, state)
@@ -139,7 +145,13 @@ defmodule RacingTelemetry.F122Server do
 
         # session
         {:ok, %F122PacketSession{} = session} ->
-          %{state|f1_22_packets_session: [session|state.f1_22_packets_session]}
+          %{state|
+            f1_22_packets_session: [session|state.f1_22_packets_session],
+            current_f1_22_packet_session: session}
+
+        # session_history
+        {:ok, %F122PacketSessionHistory{} = _session_history} ->
+          state
 
         # generic packet: not parsing this packet type yet
         {:ok, %F122Packet{} = packet} ->

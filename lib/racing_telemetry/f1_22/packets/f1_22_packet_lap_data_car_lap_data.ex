@@ -124,7 +124,7 @@ defmodule RacingTelemetry.F122.Packets.F122PacketLapDataCarLapData do
       m_frameIdentifier: ph0.m_frameIdentifier,
     }}
   end
-  def from_binary(car_index, data) do
+  def from_binary(ph0, car_index, data) do
     Logger.error("car_index=#{car_index} data_byte_size=#{byte_size(data)} data=#{inspect data}")
     {:error, %{packet_lap_data_car_lap_data: ["is invalid"]}}
   end
